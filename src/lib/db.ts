@@ -37,18 +37,42 @@ export async function getClip(id: string): Promise<Clip | null> {
   return clips.find((clip) => clip.id === id) ?? null;
 }
 
+function getLatestUnpinnedClip(clips: Clip[]): Clip | null {
+  const unpinned = clips.filter((clip) => !clip.pinned);
+  if (unpinned.length === 0) {
+    return null;
+  }
+  return unpinned.reduce((latest, clip) =>
+    clip.updated_at > latest.updated_at ? clip : latest,
+  );
+}
+
 export async function saveClip(
   clip: Omit<Clip, 'id' | 'created_at' | 'updated_at' | 'use_count'>,
 ): Promise<Clip> {
   const now = Date.now();
+  const clips = await loadClips();
+  const latestUnpinned = getLatestUnpinnedClip(clips);
+
+  if (latestUnpinned && latestUnpinned.content === clip.content) {
+    const index = clips.findIndex((item) => item.id === latestUnpinned.id);
+    const deduped: Clip = {
+      ...clips[index],
+      updated_at: now,
+      use_count: clips[index].use_count + 1,
+    };
+    clips[index] = deduped;
+    await persistClips(clips);
+    return deduped;
+  }
+
   const saved: Clip = {
     ...clip,
     id: globalThis.crypto.randomUUID(),
     created_at: now,
     updated_at: now,
-    use_count: 0,
+    use_count: 1,
   };
-  const clips = await loadClips();
   clips.push(saved);
   await persistClips(clips);
   return saved;

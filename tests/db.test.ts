@@ -38,7 +38,7 @@ describe('clip CRUD', () => {
     expect(saved.id).toMatch(
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
     );
-    expect(saved.use_count).toBe(0);
+    expect(saved.use_count).toBe(1);
     expect(saved.created_at).toBe(saved.updated_at);
 
     const listed = await listClips();
@@ -76,6 +76,20 @@ describe('clip CRUD', () => {
 
     const loaded = await getSettings();
     expect(loaded).toEqual(updated);
+  });
+
+  it('dedupes consecutive identical clips and increments use_count', async () => {
+    const input = { ...baseClipInput, content: 'same body' };
+
+    await saveClip(input);
+    await saveClip(input);
+    const third = await saveClip(input);
+
+    const listed = await listClips();
+    expect(listed).toHaveLength(1);
+    expect(listed[0].content).toBe('same body');
+    expect(third.use_count).toBe(3);
+    expect(listed[0].use_count).toBe(3);
   });
 
   it('lists pinned clips before unpinned clips', async () => {
