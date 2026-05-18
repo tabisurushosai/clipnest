@@ -1,0 +1,17 @@
+{
+  "extension_name": {
+    "message": "Clipnest - AI Clipboard History"
+  },
+  "extension_description": {
+    "message": "AI auto-categorizes your copy history. Insert templates instantly. $5 one-time unlocks AI features and unlimited storage. Data stays on your device—nothing leaves."
+  },
+  "popup_title": {
+    "message": "Clipnest"
+  },
+  "search_placeholder": {
+    "message": "Search clips..."
+  },
+  "empty_state": {
+    "message": "No clips yet. Copy something from any webpage and it will appear here."
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "extension_name": {
+    "message": "Clipnest - AI クリップボード履歴"
+  },
+  "extension_description": {
+    "message": "過去のコピー履歴を AI が自動分類。テンプレート機能で定型文を即貼り付け。$5 買い切りで AI 機能と無制限保存を恒久解放。データは端末内に保存し、外部送信しません。"
+  },
+  "popup_title": {
+    "message": "Clipnest"
+  },
+  "search_placeholder": {
+    "message": "クリップを検索..."
+  },
+  "empty_state": {
+    "message": "まだクリップがありません。Web ページで何かをコピーすると、ここに表示されます。"
+  }
+}
