@@ -4,6 +4,7 @@ import {
   getSettings,
   incrementUseCount,
   listClips,
+  pruneClips,
   saveClip,
 } from '../lib/db';
 import { runMigrations } from '../lib/migrations';
@@ -11,6 +12,9 @@ import { isMsg, type Msg, type MsgResponse } from '../lib/messages';
 import type { Clip } from '../lib/types';
 
 globalThis.console.log('[clipnest] background SW started', new Date().toISOString());
+
+const PRUNE_ALARM_NAME = 'clipnest_prune';
+const MS_PER_DAY = 86_400_000;
 
 type ChromeTabs = {
   query: (queryInfo: { active: boolean; currentWindow: boolean }) => Promise<Array<{ id?: number }>>;
@@ -22,6 +26,11 @@ type ChromeScripting = {
     func: (...args: never[]) => unknown;
     args: unknown[];
   }) => Promise<Array<{ result?: unknown; error?: string }>>;
+};
+
+type ChromeAlarms = {
+  create: (name: string, alarmInfo: { periodInMinutes: number }) => void;
+  onAlarm: { addListener: (callback: (alarm: { name?: string }) => void) => void };
 };
 
 type ChromeRuntime = {
@@ -42,6 +51,7 @@ type ChromeApi = {
   runtime?: ChromeRuntime;
   tabs?: ChromeTabs;
   scripting?: ChromeScripting;
+  alarms?: ChromeAlarms;
 };
 
 function getChrome(): ChromeApi | undefined {
@@ -144,16 +154,32 @@ async function handleMessage(msg: Msg): Promise<MsgResponse> {
   }
 }
 
-const chromeRuntime = getChrome()?.runtime;
+async function runPruneFromSettings(): Promise<void> {
+  const settings = await getSettings();
+  const removed = await pruneClips(settings.max_clips, settings.retention_days * MS_PER_DAY);
+  globalThis.console.log('[clipnest] pruned clips', removed);
+}
+
+const chromeApi = getChrome();
+const chromeRuntime = chromeApi?.runtime;
 
 chromeRuntime?.onInstalled.addListener(() => {
   void runMigrations();
   void getSettings();
+  chromeApi?.alarms?.create(PRUNE_ALARM_NAME, { periodInMinutes: 60 });
 });
 
 chromeRuntime?.onStartup.addListener(() => {
   globalThis.console.log('[clipnest] background SW onStartup', new Date().toISOString());
 });
+
+chromeApi?.alarms?.onAlarm.addListener((alarm) => {
+  if (alarm.name === PRUNE_ALARM_NAME) {
+    void runPruneFromSettings();
+  }
+});
+
+void runPruneFromSettings();
 
 chromeRuntime?.onMessage.addListener((message, _sender, sendResponse) => {
   if (!isMsg(message)) {
