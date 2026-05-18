@@ -12,20 +12,20 @@
     "scripting"
   ],
   "background": {
-    "service_worker": "dist/background.js",
+    "service_worker": "src/background/index.ts",
     "type": "module"
   },
   "action": {
-    "default_popup": "dist/popup/index.html"
+    "default_popup": "src/popup/index.html"
   },
   "options_ui": {
-    "page": "dist/options/index.html",
+    "page": "src/options/index.html",
     "open_in_tab": true
   },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["dist/content.js"],
+      "js": ["src/content/index.ts"],
       "run_at": "document_idle"
     }
   ],
