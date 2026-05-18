@@ -1,4 +1,4 @@
-/* global document, location, Node, ClipboardEvent, HTMLInputElement, Element, URL */
+/* global document, location, Node, ClipboardEvent, HTMLInputElement, Element, URL, FileReader, Blob */
 import { sendMessage } from '../lib/messages';
 
 const PREVIEW_MAX_LEN = 200;
@@ -67,13 +67,69 @@ function buildBasePayload() {
   };
 }
 
-function onCopy(event: ClipboardEvent): void {
+function readFileAsDataUrl(file: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        resolve(reader.result);
+        return;
+      }
+      reject(new Error('FileReader did not return a string'));
+    };
+    reader.onerror = () => {
+      reject(reader.error ?? new Error('FileReader failed'));
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function findClipboardImageDataUrl(event: ClipboardEvent): Promise<string | null> {
+  const items = event.clipboardData?.items;
+  if (!items) {
+    return null;
+  }
+
+  for (const item of items) {
+    if (!item.type.startsWith('image/')) {
+      continue;
+    }
+    const file = item.getAsFile();
+    if (!file) {
+      continue;
+    }
+    return readFileAsDataUrl(file);
+  }
+
+  return null;
+}
+
+async function handleCopy(event: ClipboardEvent): Promise<void> {
   if (isPasswordCopy(event)) {
     return;
   }
 
-  const html = event.clipboardData?.getData('text/html')?.trim() ?? '';
   const base = buildBasePayload();
+
+  try {
+    const imageDataUrl = await findClipboardImageDataUrl(event);
+    if (imageDataUrl) {
+      await sendMessage({
+        type: 'save_clip',
+        payload: {
+          ...base,
+          type: 'image',
+          content: imageDataUrl,
+          preview: '',
+        },
+      });
+      return;
+    }
+  } catch (error: unknown) {
+    globalThis.console.error('[clipnest] image clipboard read failed', error);
+  }
+
+  const html = event.clipboardData?.getData('text/html')?.trim() ?? '';
 
   if (html) {
     void sendMessage({
@@ -105,6 +161,12 @@ function onCopy(event: ClipboardEvent): void {
     },
   }).catch((error: unknown) => {
     globalThis.console.error('[clipnest] save_clip from content failed', error);
+  });
+}
+
+function onCopy(event: ClipboardEvent): void {
+  void handleCopy(event).catch((error: unknown) => {
+    globalThis.console.error('[clipnest] copy handler failed', error);
   });
 }
 

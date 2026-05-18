@@ -9,6 +9,7 @@ import {
 } from '../lib/db';
 import { runMigrations } from '../lib/migrations';
 import { prepareHtmlClipContent } from '../lib/html';
+import { MAX_IMAGE_BYTES, prepareImageClipContent } from '../lib/image';
 import { isMsg, type ClipInput, type Msg, type MsgResponse } from '../lib/messages';
 import type { Clip } from '../lib/types';
 
@@ -198,13 +199,24 @@ async function handleCopyClip(id: string): Promise<Extract<MsgResponse, { type: 
   return { type: 'copy_clip', ok: true };
 }
 
-function prepareSaveClipPayload(payload: ClipInput): ClipInput {
-  if (payload.type !== 'html') {
-    return payload;
+function prepareSaveClipPayload(payload: ClipInput): ClipInput | null {
+  if (payload.type === 'html') {
+    const { content, preview } = prepareHtmlClipContent(payload.content);
+    return { ...payload, content, preview };
   }
 
-  const { content, preview } = prepareHtmlClipContent(payload.content);
-  return { ...payload, content, preview };
+  if (payload.type === 'image') {
+    const prepared = prepareImageClipContent(payload.content);
+    if (!prepared) {
+      globalThis.console.warn('[clipnest] image too large, save rejected', {
+        maxBytes: MAX_IMAGE_BYTES,
+      });
+      return null;
+    }
+    return { ...payload, content: prepared.content, preview: prepared.preview };
+  }
+
+  return payload;
 }
 
 async function handleMessage(msg: Msg): Promise<MsgResponse> {
@@ -212,7 +224,11 @@ async function handleMessage(msg: Msg): Promise<MsgResponse> {
     case 'list_clips':
       return { type: 'list_clips', clips: await listClips() };
     case 'save_clip': {
-      const clip = await saveClip(prepareSaveClipPayload(msg.payload));
+      const prepared = prepareSaveClipPayload(msg.payload);
+      if (!prepared) {
+        throw new Error('save_clip rejected');
+      }
+      const clip = await saveClip(prepared);
       await refreshBadge();
       await checkStorageUsageWarning();
       return { type: 'save_clip', clip };
