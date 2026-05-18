@@ -15,6 +15,7 @@ globalThis.console.log('[clipnest] background SW started', new Date().toISOStrin
 
 const PRUNE_ALARM_NAME = 'clipnest_prune';
 const MS_PER_DAY = 86_400_000;
+const BADGE_BG_COLOR = '#3B82F6';
 
 type ChromeTabs = {
   query: (queryInfo: { active: boolean; currentWindow: boolean }) => Promise<Array<{ id?: number }>>;
@@ -31,6 +32,11 @@ type ChromeScripting = {
 type ChromeAlarms = {
   create: (name: string, alarmInfo: { periodInMinutes: number }) => void;
   onAlarm: { addListener: (callback: (alarm: { name?: string }) => void) => void };
+};
+
+type ChromeAction = {
+  setBadgeText: (details: { text: string }) => void;
+  setBadgeBackgroundColor: (details: { color: string }) => void;
 };
 
 type ChromeRuntime = {
@@ -52,10 +58,28 @@ type ChromeApi = {
   tabs?: ChromeTabs;
   scripting?: ChromeScripting;
   alarms?: ChromeAlarms;
+  action?: ChromeAction;
 };
 
 function getChrome(): ChromeApi | undefined {
   return (globalThis as { chrome?: ChromeApi }).chrome;
+}
+
+export async function refreshBadge(): Promise<void> {
+  const action = getChrome()?.action;
+  if (!action) {
+    return;
+  }
+
+  action.setBadgeBackgroundColor({ color: BADGE_BG_COLOR });
+
+  const count = (await listClips()).length;
+  if (count === 0) {
+    action.setBadgeText({ text: '' });
+    return;
+  }
+
+  action.setBadgeText({ text: count >= 100 ? '99+' : String(count) });
 }
 
 /* eslint-disable no-undef -- runs in page context when injected via executeScript */
@@ -144,10 +168,14 @@ async function handleMessage(msg: Msg): Promise<MsgResponse> {
   switch (msg.type) {
     case 'list_clips':
       return { type: 'list_clips', clips: await listClips() };
-    case 'save_clip':
-      return { type: 'save_clip', clip: await saveClip(msg.payload) };
+    case 'save_clip': {
+      const clip = await saveClip(msg.payload);
+      await refreshBadge();
+      return { type: 'save_clip', clip };
+    }
     case 'delete_clip':
       await deleteClip(msg.id);
+      await refreshBadge();
       return { type: 'delete_clip', success: true };
     case 'copy_clip':
       return handleCopyClip(msg.id);
@@ -158,19 +186,24 @@ async function runPruneFromSettings(): Promise<void> {
   const settings = await getSettings();
   const removed = await pruneClips(settings.max_clips, settings.retention_days * MS_PER_DAY);
   globalThis.console.log('[clipnest] pruned clips', removed);
+  await refreshBadge();
 }
 
 const chromeApi = getChrome();
 const chromeRuntime = chromeApi?.runtime;
 
 chromeRuntime?.onInstalled.addListener(() => {
-  void runMigrations();
-  void getSettings();
-  chromeApi?.alarms?.create(PRUNE_ALARM_NAME, { periodInMinutes: 60 });
+  void (async () => {
+    await runMigrations();
+    await getSettings();
+    chromeApi?.alarms?.create(PRUNE_ALARM_NAME, { periodInMinutes: 60 });
+    await refreshBadge();
+  })();
 });
 
 chromeRuntime?.onStartup.addListener(() => {
   globalThis.console.log('[clipnest] background SW onStartup', new Date().toISOString());
+  void refreshBadge();
 });
 
 chromeApi?.alarms?.onAlarm.addListener((alarm) => {
