@@ -8,7 +8,8 @@ import {
   saveClip,
 } from '../lib/db';
 import { runMigrations } from '../lib/migrations';
-import { isMsg, type Msg, type MsgResponse } from '../lib/messages';
+import { prepareHtmlClipContent } from '../lib/html';
+import { isMsg, type ClipInput, type Msg, type MsgResponse } from '../lib/messages';
 import type { Clip } from '../lib/types';
 
 globalThis.console.log('[clipnest] background SW started', new Date().toISOString());
@@ -197,12 +198,21 @@ async function handleCopyClip(id: string): Promise<Extract<MsgResponse, { type: 
   return { type: 'copy_clip', ok: true };
 }
 
+function prepareSaveClipPayload(payload: ClipInput): ClipInput {
+  if (payload.type !== 'html') {
+    return payload;
+  }
+
+  const { content, preview } = prepareHtmlClipContent(payload.content);
+  return { ...payload, content, preview };
+}
+
 async function handleMessage(msg: Msg): Promise<MsgResponse> {
   switch (msg.type) {
     case 'list_clips':
       return { type: 'list_clips', clips: await listClips() };
     case 'save_clip': {
-      const clip = await saveClip(msg.payload);
+      const clip = await saveClip(prepareSaveClipPayload(msg.payload));
       await refreshBadge();
       await checkStorageUsageWarning();
       return { type: 'save_clip', clip };

@@ -56,8 +56,37 @@ function buildPreview(content: string): string {
   return `${content.slice(0, PREVIEW_MAX_LEN)}…`;
 }
 
+function buildBasePayload() {
+  return {
+    source_url: location.href,
+    source_title: getPageTitle(),
+    source_favicon_url: getFaviconUrl(),
+    tag_ids: [] as string[],
+    ai_category: null,
+    pinned: false,
+  };
+}
+
 function onCopy(event: ClipboardEvent): void {
   if (isPasswordCopy(event)) {
+    return;
+  }
+
+  const html = event.clipboardData?.getData('text/html')?.trim() ?? '';
+  const base = buildBasePayload();
+
+  if (html) {
+    void sendMessage({
+      type: 'save_clip',
+      payload: {
+        ...base,
+        type: 'html',
+        content: html,
+        preview: '',
+      },
+    }).catch((error: unknown) => {
+      globalThis.console.error('[clipnest] save_clip from content failed', error);
+    });
     return;
   }
 
@@ -69,15 +98,10 @@ function onCopy(event: ClipboardEvent): void {
   void sendMessage({
     type: 'save_clip',
     payload: {
+      ...base,
       type: 'text',
       content: text,
       preview: buildPreview(text),
-      source_url: location.href,
-      source_title: getPageTitle(),
-      source_favicon_url: getFaviconUrl(),
-      tag_ids: [],
-      ai_category: null,
-      pinned: false,
     },
   }).catch((error: unknown) => {
     globalThis.console.error('[clipnest] save_clip from content failed', error);
