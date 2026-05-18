@@ -31,6 +31,49 @@ export interface Clip {
   use_count: number;
 }
 
+/** UI テーマ */
+export type Theme = 'auto' | 'light' | 'dark';
+
+/** ユーザー設定 */
+export interface Settings {
+  /** 保存クリップ数の上限 */
+  max_clips: number;
+  /** 保持日数 */
+  retention_days: number;
+  /** UI テーマ */
+  theme: Theme;
+  /** AI 機能の有効化 */
+  ai_enabled: boolean;
+  /** キーボードショートカット */
+  shortcuts: {
+    /** ポップアップを開くショートカット */
+    open_popup: string;
+  };
+  /** Gemini API キー (Premium BYO、未設定時は省略) */
+  gemini_api_key?: string;
+}
+
+const THEMES: readonly Theme[] = ['auto', 'light', 'dark'];
+
+export function isSettings(value: unknown): value is Settings {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+  const record = value as Record<string, unknown>;
+  const shortcuts = record.shortcuts;
+  return (
+    typeof record.max_clips === 'number' &&
+    typeof record.retention_days === 'number' &&
+    typeof record.theme === 'string' &&
+    THEMES.includes(record.theme as Theme) &&
+    typeof record.ai_enabled === 'boolean' &&
+    typeof shortcuts === 'object' &&
+    shortcuts !== null &&
+    typeof (shortcuts as Record<string, unknown>).open_popup === 'string' &&
+    (record.gemini_api_key === undefined || typeof record.gemini_api_key === 'string')
+  );
+}
+
 export function isClip(value: unknown): value is Clip {
   if (typeof value !== 'object' || value === null) {
     return false;

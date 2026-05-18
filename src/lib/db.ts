@@ -1,6 +1,14 @@
 import { getItem, setItem, STORAGE_KEYS } from './storage';
-import type { Clip } from './types';
-import { isClip } from './types';
+import type { Clip, Settings } from './types';
+import { isClip, isSettings } from './types';
+
+export const DEFAULT_SETTINGS: Settings = {
+  max_clips: 50,
+  retention_days: 7,
+  theme: 'auto',
+  ai_enabled: false,
+  shortcuts: { open_popup: 'Command+Shift+V' },
+};
 
 async function loadClips(): Promise<Clip[]> {
   const raw = await getItem<unknown>(STORAGE_KEYS.clips, []);
@@ -110,4 +118,27 @@ export async function pruneClips(maxCount: number, retentionMs: number): Promise
 
   await persistClips(clips.filter((clip) => !idsToRemove.has(clip.id)));
   return idsToRemove.size;
+}
+
+export async function getSettings(): Promise<Settings> {
+  const raw = await getItem<unknown>(STORAGE_KEYS.settings, null);
+  if (isSettings(raw)) {
+    return raw;
+  }
+  await setItem(STORAGE_KEYS.settings, DEFAULT_SETTINGS);
+  return { ...DEFAULT_SETTINGS };
+}
+
+export async function updateSettings(patch: Partial<Settings>): Promise<Settings> {
+  const current = await getSettings();
+  const next: Settings = {
+    ...current,
+    ...patch,
+    shortcuts: {
+      ...current.shortcuts,
+      ...(patch.shortcuts ?? {}),
+    },
+  };
+  await setItem(STORAGE_KEYS.settings, next);
+  return next;
 }

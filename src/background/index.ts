@@ -1,3 +1,4 @@
+import { getSettings } from '../lib/db';
 import { runMigrations } from '../lib/migrations';
 
 const chromeRuntime = (
@@ -12,4 +13,5 @@ const chromeRuntime = (
 
 chromeRuntime?.onInstalled.addListener(() => {
   void runMigrations();
+  void getSettings();
 });

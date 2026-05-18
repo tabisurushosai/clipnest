@@ -1,10 +1,13 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
+  DEFAULT_SETTINGS,
   deleteClip,
+  getSettings,
   listClips,
   pruneClips,
   saveClip,
   updateClip,
+  updateSettings,
 } from '../src/lib/db';
 
 type MockGlobal = typeof globalThis & {
@@ -59,6 +62,20 @@ describe('clip CRUD', () => {
     const remaining = await listClips();
     expect(remaining).toHaveLength(1);
     expect(remaining[0].content).toBe('new');
+  });
+
+  it('returns DEFAULT on first getSettings and reflects updateSettings', async () => {
+    const initial = await getSettings();
+    expect(initial).toEqual(DEFAULT_SETTINGS);
+    expect(initial).not.toHaveProperty('gemini_api_key');
+
+    const updated = await updateSettings({ theme: 'dark', max_clips: 100 });
+    expect(updated.theme).toBe('dark');
+    expect(updated.max_clips).toBe(100);
+    expect(updated.shortcuts.open_popup).toBe('Command+Shift+V');
+
+    const loaded = await getSettings();
+    expect(loaded).toEqual(updated);
   });
 
   it('lists pinned clips before unpinned clips', async () => {
