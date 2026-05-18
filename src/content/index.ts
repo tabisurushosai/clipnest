@@ -1,5 +1,6 @@
 /* global document, location, Node, ClipboardEvent, HTMLInputElement, Element, URL, FileReader, Blob */
 import { sendMessage } from '../lib/messages';
+import { isClipboardUrl } from '../lib/url';
 
 const PREVIEW_MAX_LEN = 200;
 
@@ -151,13 +152,15 @@ async function handleCopy(event: ClipboardEvent): Promise<void> {
     return;
   }
 
+  const clipType = isClipboardUrl(text) ? 'url' : 'text';
+
   void sendMessage({
     type: 'save_clip',
     payload: {
       ...base,
-      type: 'text',
+      type: clipType,
       content: text,
-      preview: buildPreview(text),
+      preview: clipType === 'url' ? '' : buildPreview(text),
     },
   }).catch((error: unknown) => {
     globalThis.console.error('[clipnest] save_clip from content failed', error);

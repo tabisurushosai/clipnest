@@ -1,7 +1,7 @@
 /** クリップの種別 */
-export type ClipType = 'text' | 'html' | 'image' | 'link';
+export type ClipType = 'text' | 'html' | 'image' | 'link' | 'url';
 
-const CLIP_TYPES: readonly ClipType[] = ['text', 'html', 'image', 'link'];
+const CLIP_TYPES: readonly ClipType[] = ['text', 'html', 'image', 'link', 'url'];
 
 /** クリップボード履歴の1件 */
 export interface Clip {

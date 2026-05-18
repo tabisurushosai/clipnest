@@ -10,6 +10,7 @@ import {
 import { runMigrations } from '../lib/migrations';
 import { prepareHtmlClipContent } from '../lib/html';
 import { MAX_IMAGE_BYTES, prepareImageClipContent } from '../lib/image';
+import { prepareUrlClipContent } from '../lib/url';
 import { isMsg, type ClipInput, type Msg, type MsgResponse } from '../lib/messages';
 import type { Clip } from '../lib/types';
 
@@ -214,6 +215,11 @@ function prepareSaveClipPayload(payload: ClipInput): ClipInput | null {
       return null;
     }
     return { ...payload, content: prepared.content, preview: prepared.preview };
+  }
+
+  if (payload.type === 'url') {
+    const { content, preview } = prepareUrlClipContent(payload.content);
+    return { ...payload, content, preview };
   }
 
   return payload;
