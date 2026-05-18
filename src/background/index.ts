@@ -16,6 +16,9 @@ globalThis.console.log('[clipnest] background SW started', new Date().toISOStrin
 const PRUNE_ALARM_NAME = 'clipnest_prune';
 const MS_PER_DAY = 86_400_000;
 const BADGE_BG_COLOR = '#3B82F6';
+const BADGE_WARNING_BG_COLOR = '#EF4444';
+const STORAGE_QUOTA_BYTES = 5_242_880;
+const STORAGE_WARNING_PERCENT = 80;
 
 type ChromeTabs = {
   query: (queryInfo: { active: boolean; currentWindow: boolean }) => Promise<Array<{ id?: number }>>;
@@ -39,6 +42,14 @@ type ChromeAction = {
   setBadgeBackgroundColor: (details: { color: string }) => void;
 };
 
+type ChromeStorageLocal = {
+  getBytesInUse: (keys: string | string[] | null) => Promise<number>;
+};
+
+type ChromeStorage = {
+  local: ChromeStorageLocal;
+};
+
 type ChromeRuntime = {
   onInstalled: { addListener: (callback: () => void) => void };
   onStartup: { addListener: (callback: () => void) => void };
@@ -59,10 +70,32 @@ type ChromeApi = {
   scripting?: ChromeScripting;
   alarms?: ChromeAlarms;
   action?: ChromeAction;
+  storage?: ChromeStorage;
 };
 
 function getChrome(): ChromeApi | undefined {
   return (globalThis as { chrome?: ChromeApi }).chrome;
+}
+
+export async function getStorageUsage(): Promise<{ bytes: number; percent: number }> {
+  const getBytesInUse = getChrome()?.storage?.local?.getBytesInUse;
+  if (!getBytesInUse) {
+    return { bytes: 0, percent: 0 };
+  }
+
+  const bytes = await getBytesInUse(null);
+  const percent = (bytes / STORAGE_QUOTA_BYTES) * 100;
+  return { bytes, percent };
+}
+
+async function checkStorageUsageWarning(): Promise<void> {
+  const usage = await getStorageUsage();
+  if (usage.percent <= STORAGE_WARNING_PERCENT) {
+    return;
+  }
+
+  getChrome()?.action?.setBadgeBackgroundColor({ color: BADGE_WARNING_BG_COLOR });
+  globalThis.console.warn('[clipnest] storage usage high', usage);
 }
 
 export async function refreshBadge(): Promise<void> {
@@ -171,7 +204,12 @@ async function handleMessage(msg: Msg): Promise<MsgResponse> {
     case 'save_clip': {
       const clip = await saveClip(msg.payload);
       await refreshBadge();
+      await checkStorageUsageWarning();
       return { type: 'save_clip', clip };
+    }
+    case 'get_storage_usage': {
+      const usage = await getStorageUsage();
+      return { type: 'get_storage_usage', bytes: usage.bytes, percent: usage.percent };
     }
     case 'delete_clip':
       await deleteClip(msg.id);

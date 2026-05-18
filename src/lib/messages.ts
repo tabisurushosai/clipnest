@@ -6,14 +6,16 @@ export type Msg =
   | { type: 'list_clips' }
   | { type: 'save_clip'; payload: ClipInput }
   | { type: 'delete_clip'; id: string }
-  | { type: 'copy_clip'; id: string };
+  | { type: 'copy_clip'; id: string }
+  | { type: 'get_storage_usage' };
 
 export type MsgResponse =
   | { type: 'list_clips'; clips: Clip[] }
   | { type: 'save_clip'; clip: Clip }
   | { type: 'delete_clip'; success: true }
   | { type: 'copy_clip'; ok: true }
-  | { type: 'copy_clip'; ok: false; error: string };
+  | { type: 'copy_clip'; ok: false; error: string }
+  | { type: 'get_storage_usage'; bytes: number; percent: number };
 
 export type ResponseFor<T extends Msg> = Extract<MsgResponse, { type: T['type'] }>;
 
@@ -57,6 +59,8 @@ export function isMsg(value: unknown): value is Msg {
     case 'delete_clip':
     case 'copy_clip':
       return typeof record.id === 'string';
+    case 'get_storage_usage':
+      return true;
     default:
       return false;
   }
