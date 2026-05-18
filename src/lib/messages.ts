@@ -12,20 +12,36 @@ export type MsgResponse =
   | { type: 'list_clips'; clips: Clip[] }
   | { type: 'save_clip'; clip: Clip }
   | { type: 'delete_clip'; success: true }
-  | { type: 'copy_clip'; content: string };
+  | { type: 'copy_clip'; ok: true }
+  | { type: 'copy_clip'; ok: false; error: string };
 
 export type ResponseFor<T extends Msg> = Extract<MsgResponse, { type: T['type'] }>;
+
+function isCopyClipResponse(value: unknown): value is Extract<MsgResponse, { type: 'copy_clip' }> {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+  const record = value as Record<string, unknown>;
+  if (record.type !== 'copy_clip') {
+    return false;
+  }
+  if (record.ok === true) {
+    return true;
+  }
+  return record.ok === false && typeof record.error === 'string';
+}
 
 function isMsgResponseFor<T extends Msg['type']>(
   msgType: T,
   value: unknown,
 ): value is Extract<MsgResponse, { type: T }> {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'type' in value &&
-    (value as MsgResponse).type === msgType
-  );
+  if (typeof value !== 'object' || value === null || !('type' in value)) {
+    return false;
+  }
+  if (msgType === 'copy_clip') {
+    return isCopyClipResponse(value);
+  }
+  return (value as MsgResponse).type === msgType;
 }
 
 export function isMsg(value: unknown): value is Msg {

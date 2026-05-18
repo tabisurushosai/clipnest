@@ -8,8 +8,21 @@ import {
 } from '../lib/db';
 import { runMigrations } from '../lib/migrations';
 import { isMsg, type Msg, type MsgResponse } from '../lib/messages';
+import type { Clip } from '../lib/types';
 
 globalThis.console.log('[clipnest] background SW started', new Date().toISOString());
+
+type ChromeTabs = {
+  query: (queryInfo: { active: boolean; currentWindow: boolean }) => Promise<Array<{ id?: number }>>;
+};
+
+type ChromeScripting = {
+  executeScript: (injection: {
+    target: { tabId: number };
+    func: (...args: never[]) => unknown;
+    args: unknown[];
+  }) => Promise<Array<{ result?: unknown; error?: string }>>;
+};
 
 type ChromeRuntime = {
   onInstalled: { addListener: (callback: () => void) => void };
@@ -25,6 +38,98 @@ type ChromeRuntime = {
   };
 };
 
+type ChromeApi = {
+  runtime?: ChromeRuntime;
+  tabs?: ChromeTabs;
+  scripting?: ChromeScripting;
+};
+
+function getChrome(): ChromeApi | undefined {
+  return (globalThis as { chrome?: ChromeApi }).chrome;
+}
+
+/* eslint-disable no-undef -- runs in page context when injected via executeScript */
+/** Injected into the active tab via chrome.scripting.executeScript */
+async function injectWriteImage(dataUrl: string): Promise<void> {
+  const response = await fetch(dataUrl);
+  const blob = await response.blob();
+  const mimeType = blob.type || 'image/png';
+  await navigator.clipboard.write([new ClipboardItem({ [mimeType]: blob })]);
+}
+
+/** Injected into the active tab via chrome.scripting.executeScript */
+async function injectWriteText(text: string, clipType: string): Promise<void> {
+  if (clipType === 'html') {
+    const container = document.createElement('div');
+    container.innerHTML = text;
+    const plain = container.textContent ?? text;
+    await navigator.clipboard.writeText(plain);
+    return;
+  }
+  await navigator.clipboard.writeText(text);
+}
+/* eslint-enable no-undef */
+
+async function copyClipToClipboard(clip: Clip): Promise<{ ok: true } | { ok: false; error: string }> {
+  const chromeApi = getChrome();
+  const tabs = await chromeApi?.tabs?.query({ active: true, currentWindow: true });
+  const tabId = tabs?.[0]?.id;
+
+  if (tabId === undefined) {
+    return { ok: false, error: 'No active tab' };
+  }
+
+  if (!chromeApi?.scripting) {
+    return { ok: false, error: 'chrome.scripting is not available' };
+  }
+
+  try {
+    let results: Array<{ result?: unknown; error?: string }>;
+
+    if (clip.type === 'image') {
+      results = await chromeApi.scripting.executeScript({
+        target: { tabId },
+        func: injectWriteImage,
+        args: [clip.content],
+      });
+    } else {
+      results = await chromeApi.scripting.executeScript({
+        target: { tabId },
+        func: injectWriteText,
+        args: [clip.content, clip.type],
+      });
+    }
+
+    const injection = results[0];
+    if (injection?.error) {
+      return { ok: false, error: injection.error };
+    }
+
+    return { ok: true };
+  } catch (error: unknown) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
+async function handleCopyClip(id: string): Promise<Extract<MsgResponse, { type: 'copy_clip' }>> {
+  const clip = await getClip(id);
+  if (!clip) {
+    return { type: 'copy_clip', ok: false, error: `Clip not found: ${id}` };
+  }
+
+  await incrementUseCount(id);
+
+  const copyResult = await copyClipToClipboard(clip);
+  if (!copyResult.ok) {
+    return { type: 'copy_clip', ok: false, error: copyResult.error };
+  }
+
+  return { type: 'copy_clip', ok: true };
+}
+
 async function handleMessage(msg: Msg): Promise<MsgResponse> {
   switch (msg.type) {
     case 'list_clips':
@@ -34,18 +139,12 @@ async function handleMessage(msg: Msg): Promise<MsgResponse> {
     case 'delete_clip':
       await deleteClip(msg.id);
       return { type: 'delete_clip', success: true };
-    case 'copy_clip': {
-      const clip = await getClip(msg.id);
-      if (!clip) {
-        throw new Error(`Clip not found: ${msg.id}`);
-      }
-      await incrementUseCount(msg.id);
-      return { type: 'copy_clip', content: clip.content };
-    }
+    case 'copy_clip':
+      return handleCopyClip(msg.id);
   }
 }
 
-const chromeRuntime = (globalThis as { chrome?: { runtime?: ChromeRuntime } }).chrome?.runtime;
+const chromeRuntime = getChrome()?.runtime;
 
 chromeRuntime?.onInstalled.addListener(() => {
   void runMigrations();
