@@ -37,6 +37,20 @@ npm run build
 
 開発中は `npm run dev` で Vite の watch ビルドを使えます。変更後は `dist/` を再読み込みしてください。
 
+## Web サイト開発者向け（コピー除外）
+
+Clipnest はページ上のコピー操作を監視して履歴に保存します。次の場合は**静かに無視**します（警告ダイアログは出しません）。
+
+- `<input type="password">` 上、またはフォーカス中のパスワード欄でのコピー
+- `data-clipnest-ignore` 属性が付いた要素上、またはその要素にフォーカスがある状態でのコピー
+
+クリップしてほしくない入力欄や機密テキストには、次のように `data-clipnest-ignore` を付けてください（エスケープハッチ）。
+
+```html
+<input type="text" data-clipnest-ignore value="API トークン" />
+<div data-clipnest-ignore>社内限定の注意書き</div>
+```
+
 ## スクリプト一覧
 
 | コマンド | 説明 |

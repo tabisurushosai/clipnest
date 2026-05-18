@@ -29,25 +29,28 @@ function getPageTitle(): string {
   return location.host;
 }
 
-function isPasswordCopy(event: ClipboardEvent): boolean {
+function isIgnoredCopyElement(element: Element | null): boolean {
+  if (!element) {
+    return false;
+  }
+  if (element.hasAttribute('data-clipnest-ignore')) {
+    return true;
+  }
+  return element instanceof HTMLInputElement && element.type === 'password';
+}
+
+function shouldSkipCopy(event: ClipboardEvent): boolean {
   const target = event.target;
-  if (target instanceof HTMLInputElement && target.type === 'password') {
+  if (target instanceof Element && isIgnoredCopyElement(target)) {
     return true;
   }
 
   const active = document.activeElement;
-  if (active instanceof HTMLInputElement && active.type === 'password') {
+  if (active instanceof Element && isIgnoredCopyElement(active)) {
     return true;
   }
 
-  const selection = document.getSelection();
-  const anchor = selection?.anchorNode;
-  if (!anchor) {
-    return false;
-  }
-
-  const element = anchor.nodeType === Node.ELEMENT_NODE ? (anchor as Element) : anchor.parentElement;
-  return Boolean(element?.closest('input[type="password"]'));
+  return false;
 }
 
 function buildPreview(content: string): string {
@@ -106,7 +109,7 @@ async function findClipboardImageDataUrl(event: ClipboardEvent): Promise<string 
 }
 
 async function handleCopy(event: ClipboardEvent): Promise<void> {
-  if (isPasswordCopy(event)) {
+  if (shouldSkipCopy(event)) {
     return;
   }
 
