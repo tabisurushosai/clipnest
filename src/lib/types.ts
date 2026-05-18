@@ -17,6 +17,8 @@ export interface Clip {
   source_url: string;
   /** コピー元ページタイトル */
   source_title: string;
+  /** コピー元サイトの favicon URL */
+  source_favicon_url?: string;
   /** 紐づくタグ ID 一覧 */
   tag_ids: string[];
   /** AI 分類カテゴリ (未分類時 null) */
@@ -87,6 +89,7 @@ export function isClip(value: unknown): value is Clip {
     typeof record.preview === 'string' &&
     typeof record.source_url === 'string' &&
     typeof record.source_title === 'string' &&
+    (record.source_favicon_url === undefined || typeof record.source_favicon_url === 'string') &&
     Array.isArray(record.tag_ids) &&
     record.tag_ids.every((tagId) => typeof tagId === 'string') &&
     (record.ai_category === null || typeof record.ai_category === 'string') &&
