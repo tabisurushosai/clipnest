@@ -23,6 +23,10 @@ export interface Clip {
   tag_ids: string[];
   /** AI 分類カテゴリ (未分類時 null) */
   ai_category: string | null;
+  /** AI 生成タイトル */
+  ai_title?: string | null;
+  /** AI 要約 (長文のみ) */
+  ai_summary?: string | null;
   /** ピン留め */
   pinned: boolean;
   /** 作成日時 (Unix ms) */
@@ -31,6 +35,25 @@ export interface Clip {
   updated_at: number;
   /** 貼り付け利用回数 */
   use_count: number;
+}
+
+/** ユーザー定義タグ */
+export interface Tag {
+  id: string;
+  name: string;
+  color: string;
+}
+
+export function isTag(value: unknown): value is Tag {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+  const record = value as Record<string, unknown>;
+  return (
+    typeof record.id === 'string' &&
+    typeof record.name === 'string' &&
+    typeof record.color === 'string'
+  );
 }
 
 /** UI テーマ */
@@ -93,6 +116,12 @@ export function isClip(value: unknown): value is Clip {
     Array.isArray(record.tag_ids) &&
     record.tag_ids.every((tagId) => typeof tagId === 'string') &&
     (record.ai_category === null || typeof record.ai_category === 'string') &&
+    (record.ai_title === undefined ||
+      record.ai_title === null ||
+      typeof record.ai_title === 'string') &&
+    (record.ai_summary === undefined ||
+      record.ai_summary === null ||
+      typeof record.ai_summary === 'string') &&
     typeof record.pinned === 'boolean' &&
     typeof record.created_at === 'number' &&
     typeof record.updated_at === 'number' &&
