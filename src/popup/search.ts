@@ -1,22 +1,9 @@
 import type { Clip } from '../lib/types';
+import { filterClips as filterClipsWithOptions } from './filter';
 
+/** @deprecated use filter.ts filterClips with options */
 export function filterClips(clips: Clip[], query: string): Clip[] {
-  const normalized = query.trim().toLowerCase();
-  if (normalized === '') {
-    return clips;
-  }
-
-  return clips.filter((clip) => {
-    const haystack = [
-      clip.content,
-      clip.preview,
-      clip.source_title,
-      clip.source_url,
-    ]
-      .join('\n')
-      .toLowerCase();
-    return haystack.includes(normalized);
-  });
+  return filterClipsWithOptions(clips, { query });
 }
 
 export function bindSearch(
