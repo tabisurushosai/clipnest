@@ -11,6 +11,7 @@ import {
 import { runMigrations } from '../lib/migrations';
 import { prepareHtmlClipContent } from '../lib/html';
 import { MAX_IMAGE_BYTES, prepareImageClipContent } from '../lib/image';
+import { scheduleAiForClip } from '../lib/ai_pipeline';
 import { prepareUrlClipContent } from '../lib/url';
 import { isMsg, type ClipInput, type Msg, type MsgResponse } from '../lib/messages';
 import type { Clip } from '../lib/types';
@@ -236,6 +237,7 @@ async function handleMessage(msg: Msg): Promise<MsgResponse> {
         throw new Error('save_clip rejected');
       }
       const clip = await saveClip(prepared);
+      scheduleAiForClip(clip);
       await refreshBadge();
       await checkStorageUsageWarning();
       return { type: 'save_clip', clip };
