@@ -14,6 +14,10 @@
       <input id="search" type="search" placeholder="Search clips…" autocomplete="off" />
     </header>
     <main class="popup-main">
+      <progress id="storage-usage" max="100" value="0" aria-label="Storage usage"></progress>
+      <div id="loading" class="loading" hidden aria-busy="true">Loading…</motion.div>
+      <p id="empty-state" class="empty-state" hidden>Copy something to get started</p>
+      <p id="no-results" class="empty-state" hidden>No matches</p>
       <ul id="clip-list" aria-label="Clip list"></ul>
       <p id="error" hidden></p>
     </main>

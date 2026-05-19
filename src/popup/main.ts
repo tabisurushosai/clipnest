@@ -7,6 +7,7 @@ import { bindSearch, filterClips } from './search';
 import { applyPopupTheme, watchSystemTheme } from './theme';
 import { getItem, STORAGE_KEYS } from '../lib/storage';
 import { updateClipCounterElement } from './counter';
+import { readStorageUsage, updateStorageProgress } from './storage-usage';
 import { getLicense } from '../lib/license';
 import { isSettings } from '../lib/types';
 
@@ -55,8 +56,26 @@ function refreshList(): void {
   if (!listEl) {
     return;
   }
-  renderClipList(visibleClips(), listEl, handlers);
+  const filtered = visibleClips();
+  updateListVisibility(filtered);
+  renderClipList(filtered, listEl, handlers);
   updateFooterCounter();
+}
+
+function updateListVisibility(filtered: Clip[]): void {
+  const emptyState = document.querySelector<HTMLElement>('#empty-state');
+  const noResults = document.querySelector<HTMLElement>('#no-results');
+  const hasQuery = (searchEl?.value ?? '').trim() !== '';
+
+  if (listEl) {
+    listEl.hidden = allClips.length === 0 || (filtered.length === 0 && hasQuery);
+  }
+  if (emptyState) {
+    emptyState.hidden = allClips.length !== 0;
+  }
+  if (noResults) {
+    noResults.hidden = !(allClips.length > 0 && filtered.length === 0 && hasQuery);
+  }
 }
 
 function updateFooterCounter(): void {
@@ -120,9 +139,19 @@ const handlers: ClipListHandlers = {
 };
 
 async function loadClips(): Promise<void> {
-  const response = await sendMessage({ type: 'list_clips' });
-  allClips = response.clips;
-  refreshList();
+  const loading = document.querySelector<HTMLElement>('#loading');
+  if (loading) {
+    loading.hidden = false;
+  }
+  try {
+    const response = await sendMessage({ type: 'list_clips' });
+    allClips = response.clips;
+    refreshList();
+  } finally {
+    if (loading) {
+      loading.hidden = true;
+    }
+  }
 }
 
 function applyStatusBadge(tier: 'free' | 'trial' | 'premium'): void {
@@ -144,6 +173,12 @@ async function bootstrap(): Promise<void> {
   currentTier = license.tier;
   applyStatusBadge(license.tier);
   updateFooterCounter();
+
+  const storageBar = document.querySelector<HTMLProgressElement>('#storage-usage');
+  if (storageBar) {
+    const usage = await readStorageUsage();
+    updateStorageProgress(storageBar, usage.percent);
+  }
 
   await applyPopupTheme();
 

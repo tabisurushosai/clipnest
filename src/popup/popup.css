@@ -76,6 +76,45 @@ body {
   padding: 8px 12px;
 }
 
+#storage-usage {
+  width: 100%;
+  height: 6px;
+  margin-bottom: 8px;
+  appearance: none;
+}
+
+#storage-usage::-webkit-progress-bar {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+#storage-usage::-webkit-progress-value {
+  background: var(--accent);
+  border-radius: 4px;
+}
+
+#storage-usage.warning::-webkit-progress-value {
+  background: #f59e0b;
+}
+
+#storage-usage.error::-webkit-progress-value {
+  background: var(--error);
+}
+
+.loading {
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+  padding: 16px;
+}
+
+.empty-state {
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+  padding: 24px 12px;
+}
+
 #clip-list {
   list-style: none;
   margin: 0;
