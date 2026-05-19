@@ -82,5 +82,5 @@ export async function sendMessage<T extends Msg>(msg: T): Promise<ResponseFor<T>
     throw new Error(`Unexpected response for message type: ${msg.type}`);
   }
 
-  return response;
+  return response as ResponseFor<T>;
 }
