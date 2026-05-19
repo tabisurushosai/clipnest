@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Clipnest Tags</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 720px;
+        margin: 24px auto;
+        padding: 0 16px;
+      }
+      .tag-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+      .color-chip {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        border: 2px solid transparent;
+        cursor: pointer;
+      }
+      .color-chip.is-selected {
+        border-color: #0f172a;
+      }
+      .tag-chip-preview {
+        padding: 2px 8px;
+        border-radius: 999px;
+        color: #fff;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <nav><a href="index.html">← Settings</a></nav>
+    <h1>Tag manager</h1>
+    <form id="create-form">
+      <input id="new-tag-name" type="text" placeholder="New tag name" required />
+      <div id="color-presets" aria-label="Color presets"></div>
+      <button type="submit">Add tag</button>
+    </form>
+    <ul id="tag-list"></ul>
+    <script type="module" src="./tags.ts"></script>
+  </body>
+</html>
