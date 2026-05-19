@@ -1,3 +1,4 @@
+import { updateSettings } from './db';
 import { getItem, setItem, STORAGE_KEYS } from './storage';
 
 export type LicenseTier = 'free' | 'trial' | 'premium';
@@ -75,6 +76,22 @@ export async function getLicense(now = Date.now()): Promise<LicenseStatus> {
   };
   await setItem(STORAGE_KEYS.license, trial);
   return trial;
+}
+
+const AI_AUTH_FAILURE_LIMIT = 5;
+
+export async function recordAiAuthFailure(): Promise<number> {
+  const current = await getItem<number>(STORAGE_KEYS.ai_error_count, 0);
+  const next = current + 1;
+  await setItem(STORAGE_KEYS.ai_error_count, next);
+  if (next >= AI_AUTH_FAILURE_LIMIT) {
+    await updateSettings({ ai_enabled: false });
+  }
+  return next;
+}
+
+export async function getAiErrorCount(): Promise<number> {
+  return getItem<number>(STORAGE_KEYS.ai_error_count, 0);
 }
 
 export async function activatePremium(now = Date.now()): Promise<LicenseStatus> {
