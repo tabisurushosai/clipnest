@@ -6,6 +6,7 @@ import { renderClipList, type ClipListHandlers } from './render';
 import { bindSearch, filterClips } from './search';
 import { applyPopupTheme, watchSystemTheme } from './theme';
 import { getItem, STORAGE_KEYS } from '../lib/storage';
+import { updateClipCounterElement } from './counter';
 import { getLicense } from '../lib/license';
 import { isSettings } from '../lib/types';
 
@@ -15,6 +16,7 @@ const searchEl = document.querySelector<HTMLInputElement>('#search');
 const toastEl = document.querySelector<HTMLElement>('#toast');
 
 let allClips: Clip[] = [];
+let currentTier: 'free' | 'trial' | 'premium' = 'free';
 
 function showError(message: string): void {
   if (!errorEl) {
@@ -54,6 +56,14 @@ function refreshList(): void {
     return;
   }
   renderClipList(visibleClips(), listEl, handlers);
+  updateFooterCounter();
+}
+
+function updateFooterCounter(): void {
+  const counter = document.querySelector<HTMLElement>('#clip-counter');
+  if (counter) {
+    updateClipCounterElement(counter, allClips.length, currentTier);
+  }
 }
 
 const handlers: ClipListHandlers = {
@@ -131,7 +141,9 @@ async function bootstrap(): Promise<void> {
   }
 
   const license = await getLicense();
+  currentTier = license.tier;
   applyStatusBadge(license.tier);
+  updateFooterCounter();
 
   await applyPopupTheme();
 
