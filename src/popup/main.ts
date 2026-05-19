@@ -6,6 +6,7 @@ import { renderClipList, type ClipListHandlers } from './render';
 import { bindSearch, filterClips } from './search';
 import { applyPopupTheme, watchSystemTheme } from './theme';
 import { getItem, STORAGE_KEYS } from '../lib/storage';
+import { getLicense } from '../lib/license';
 import { isSettings } from '../lib/types';
 
 const listEl = document.querySelector<HTMLUListElement>('#clip-list');
@@ -114,10 +115,23 @@ async function loadClips(): Promise<void> {
   refreshList();
 }
 
+function applyStatusBadge(tier: 'free' | 'trial' | 'premium'): void {
+  const badge = document.querySelector<HTMLElement>('#status-badge');
+  if (!badge) {
+    return;
+  }
+  const label = tier.toUpperCase();
+  badge.textContent = label;
+  badge.className = `tier-${tier}`;
+}
+
 async function bootstrap(): Promise<void> {
   if (!listEl) {
     return;
   }
+
+  const license = await getLicense();
+  applyStatusBadge(license.tier);
 
   await applyPopupTheme();
 
