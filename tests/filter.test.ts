@@ -45,6 +45,14 @@ describe('filterClips', () => {
     expect(filterClips([sample, htmlClip], { type: 'all' })).toHaveLength(2);
   });
 
+  it('filters by week range boundary', () => {
+    const now = Date.parse('2026-05-19T12:00:00Z');
+    const weekStart = now - 7 * 24 * 60 * 60 * 1000;
+    const old = { ...sample, id: 'week-old', created_at: weekStart - 1 };
+    const fresh = { ...sample, id: 'week-new', created_at: weekStart };
+    expect(filterClips([old, fresh], { dateRange: 'week', now })).toEqual([fresh]);
+  });
+
   it('filters by date range today boundary', () => {
     const now = Date.parse('2026-05-19T12:00:00Z');
     const todayStart = getSinceTimestamp('today', now)!;
