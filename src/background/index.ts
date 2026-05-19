@@ -2,6 +2,7 @@ import {
   deleteClip,
   getClip,
   getSettings,
+  updateClip,
   incrementUseCount,
   listClips,
   pruneClips,
@@ -247,6 +248,18 @@ async function handleMessage(msg: Msg): Promise<MsgResponse> {
       await deleteClip(msg.id);
       await refreshBadge();
       return { type: 'delete_clip', success: true };
+    case 'toggle_pin': {
+      const clip = await getClip(msg.id);
+      if (!clip) {
+        throw new Error(`Clip not found: ${msg.id}`);
+      }
+      await updateClip(msg.id, { pinned: !clip.pinned });
+      const updated = await getClip(msg.id);
+      if (!updated) {
+        throw new Error(`Clip not found after toggle: ${msg.id}`);
+      }
+      return { type: 'toggle_pin', clip: updated };
+    }
     case 'copy_clip':
       return handleCopyClip(msg.id);
   }

@@ -7,6 +7,7 @@ export type Msg =
   | { type: 'save_clip'; payload: ClipInput }
   | { type: 'delete_clip'; id: string }
   | { type: 'copy_clip'; id: string }
+  | { type: 'toggle_pin'; id: string }
   | { type: 'get_storage_usage' };
 
 export type MsgResponse =
@@ -15,6 +16,7 @@ export type MsgResponse =
   | { type: 'delete_clip'; success: true }
   | { type: 'copy_clip'; ok: true }
   | { type: 'copy_clip'; ok: false; error: string }
+  | { type: 'toggle_pin'; clip: Clip }
   | { type: 'get_storage_usage'; bytes: number; percent: number };
 
 export type ResponseFor<T extends Msg> = Extract<MsgResponse, { type: T['type'] }>;
@@ -58,6 +60,7 @@ export function isMsg(value: unknown): value is Msg {
       return typeof record.payload === 'object' && record.payload !== null;
     case 'delete_clip':
     case 'copy_clip':
+    case 'toggle_pin':
       return typeof record.id === 'string';
     case 'get_storage_usage':
       return true;
