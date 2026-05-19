@@ -11,11 +11,33 @@
   <body>
     <header class="popup-header">
       <h1>Clipnest</h1>
-      <input id="search" type="search" placeholder="Search clips…" autocomplete="off" />
+      <div class="search-row">
+        <input id="search" type="search" placeholder="Search clips…" autocomplete="off" />
+        <button id="clear-search" type="button" aria-label="Clear search">×</button>
+      </div>
+      <div class="filter-toolbar" role="toolbar" aria-label="Type filters">
+        <button type="button" class="filter-chip is-active" data-type-filter="all">All</button>
+        <button type="button" class="filter-chip" data-type-filter="text">Text</button>
+        <button type="button" class="filter-chip" data-type-filter="html">HTML</button>
+        <button type="button" class="filter-chip" data-type-filter="url">URL</button>
+        <button type="button" class="filter-chip" data-type-filter="image">Image</button>
+      </div>
+      <div class="filter-toolbar" role="toolbar" aria-label="Date filters">
+        <button type="button" class="filter-chip is-active" data-date-filter="all">All</button>
+        <button type="button" class="filter-chip" data-date-filter="today">Today</button>
+        <button type="button" class="filter-chip" data-date-filter="week">This week</button>
+        <button type="button" class="filter-chip" data-date-filter="month">This month</button>
+      </div>
+      <div class="filter-toolbar" role="toolbar" aria-label="Sort">
+        <button type="button" class="filter-chip is-active" data-sort="pinned_first">Pinned first</button>
+        <button type="button" class="filter-chip" data-sort="newest">Newest</button>
+        <button type="button" class="filter-chip" data-sort="most_used">Most used</button>
+      </div>
+      <div id="tag-filters" class="filter-toolbar tag-filters" role="toolbar" aria-label="Tag filters"></div>
     </header>
     <main class="popup-main">
       <progress id="storage-usage" max="100" value="0" aria-label="Storage usage"></progress>
-      <div id="loading" class="loading" hidden aria-busy="true">Loading…</motion.div>
+      <div id="loading" class="loading" hidden aria-busy="true">Loading…</div>
       <p id="empty-state" class="empty-state" hidden>Copy something to get started</p>
       <p id="no-results" class="empty-state" hidden>No matches</p>
       <ul id="clip-list" aria-label="Clip list"></ul>
@@ -25,6 +47,16 @@
       <span id="clip-counter"></span>
       <span id="status-badge" class="tier-free">FREE</span>
     </footer>
+    <dialog id="translate-modal">
+      <article>
+        <h2>Translation</h2>
+        <p id="translate-body"></p>
+        <footer>
+          <button id="translate-copy" type="button">Copy</button>
+          <button type="button" onclick="this.closest('dialog')?.close()">Close</button>
+        </footer>
+      </article>
+    </dialog>
     <div id="toast" hidden aria-live="polite">Copied</div>
     <script type="module" src="./main.ts"></script>
   </body>

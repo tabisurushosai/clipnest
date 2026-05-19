@@ -1,23 +1,42 @@
 import './popup.css';
 
+import { translateClip } from '../lib/ai';
+import { updateClip } from '../lib/db';
 import { sendMessage } from '../lib/messages';
-import type { Clip } from '../lib/types';
-import { renderClipList, type ClipListHandlers } from './render';
-import { bindSearch, filterClips } from './search';
-import { applyPopupTheme, watchSystemTheme } from './theme';
 import { getItem, STORAGE_KEYS } from '../lib/storage';
-import { updateClipCounterElement } from './counter';
-import { readStorageUsage, updateStorageProgress } from './storage-usage';
-import { getLicense } from '../lib/license';
+import { createTag, listTags } from '../lib/tags';
+import type { Clip, Tag } from '../lib/types';
 import { isSettings } from '../lib/types';
+import { getLicense } from '../lib/license';
+import { updateClipCounterElement } from './counter';
+import { filterClips, type ClipTypeFilter, type DateRangeFilter } from './filter';
+import { bindKeyboardNavigation } from './keyboard';
+import {
+  DEFAULT_POPUP_STATE,
+  loadPopupState,
+  savePopupState,
+  type PopupUiState,
+} from './popup-state';
+import { renderClipList, type ClipListHandlers } from './render';
+import { readStorageUsage, updateStorageProgress } from './storage-usage';
+import { sortClips, type SortMode } from './sort';
+import { applyPopupTheme, watchSystemTheme } from './theme';
 
 const listEl = document.querySelector<HTMLUListElement>('#clip-list');
 const errorEl = document.querySelector<HTMLElement>('#error');
 const searchEl = document.querySelector<HTMLInputElement>('#search');
+const clearSearchEl = document.querySelector<HTMLButtonElement>('#clear-search');
 const toastEl = document.querySelector<HTMLElement>('#toast');
+const translateModal = document.querySelector<HTMLDialogElement>('#translate-modal');
+const translateBody = document.querySelector<HTMLElement>('#translate-body');
+const translateCopyBtn = document.querySelector<HTMLButtonElement>('#translate-copy');
 
 let allClips: Clip[] = [];
+let allTags: Tag[] = [];
 let currentTier: 'free' | 'trial' | 'premium' = 'free';
+let uiState: PopupUiState = { ...DEFAULT_POPUP_STATE };
+let virtualPage = 0;
+let virtualObserver: IntersectionObserver | null = null;
 
 function showError(message: string): void {
   if (!errorEl) {
@@ -49,32 +68,37 @@ function showToast(message = 'Copied'): void {
 }
 
 function visibleClips(): Clip[] {
-  return filterClips(allClips, searchEl?.value ?? '');
+  const filtered = filterClips(allClips, {
+    query: uiState.query,
+    type: uiState.type,
+    dateRange: uiState.dateRange,
+    tagIds: uiState.tagIds,
+  });
+  return sortClips(filtered, uiState.sort);
 }
 
-function refreshList(): void {
-  if (!listEl) {
-    return;
-  }
-  const filtered = visibleClips();
-  updateListVisibility(filtered);
-  renderClipList(filtered, listEl, handlers);
-  updateFooterCounter();
+async function persistUiState(): Promise<void> {
+  await savePopupState(uiState);
 }
 
 function updateListVisibility(filtered: Clip[]): void {
   const emptyState = document.querySelector<HTMLElement>('#empty-state');
   const noResults = document.querySelector<HTMLElement>('#no-results');
-  const hasQuery = (searchEl?.value ?? '').trim() !== '';
+  const hasQuery = uiState.query.trim() !== '';
+  const hasFilters =
+    uiState.type !== 'all' ||
+    uiState.dateRange !== 'all' ||
+    uiState.tagIds.length > 0;
+  const noMatches = filtered.length === 0 && (hasQuery || hasFilters);
 
   if (listEl) {
-    listEl.hidden = allClips.length === 0 || (filtered.length === 0 && hasQuery);
+    listEl.hidden = allClips.length === 0 || noMatches;
   }
   if (emptyState) {
     emptyState.hidden = allClips.length !== 0;
   }
   if (noResults) {
-    noResults.hidden = !(allClips.length > 0 && filtered.length === 0 && hasQuery);
+    noResults.hidden = !noMatches || allClips.length === 0;
   }
 }
 
@@ -83,6 +107,58 @@ function updateFooterCounter(): void {
   if (counter) {
     updateClipCounterElement(counter, allClips.length, currentTier);
   }
+}
+
+function syncFilterUi(): void {
+  document.querySelectorAll<HTMLButtonElement>('[data-type-filter]').forEach((button) => {
+    button.classList.toggle('is-active', button.dataset.typeFilter === uiState.type);
+  });
+  document.querySelectorAll<HTMLButtonElement>('[data-date-filter]').forEach((button) => {
+    button.classList.toggle('is-active', button.dataset.dateFilter === uiState.dateRange);
+  });
+  document.querySelectorAll<HTMLButtonElement>('[data-sort]').forEach((button) => {
+    button.classList.toggle('is-active', button.dataset.sort === uiState.sort);
+  });
+  document.querySelectorAll<HTMLButtonElement>('[data-tag-id]').forEach((button) => {
+    const tagId = button.dataset.tagId ?? '';
+    button.classList.toggle('is-active', uiState.tagIds.includes(tagId));
+  });
+  if (searchEl) {
+    searchEl.value = uiState.query;
+  }
+}
+
+function setupVirtualObserver(): void {
+  virtualObserver?.disconnect();
+  const sentinel = document.querySelector('#virtual-sentinel');
+  if (!sentinel || !listEl) {
+    return;
+  }
+  virtualObserver = new IntersectionObserver(
+    (entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) {
+        virtualPage += 1;
+        refreshList();
+      }
+    },
+    { root: listEl.parentElement, threshold: 0.1 },
+  );
+  virtualObserver.observe(sentinel);
+}
+
+function refreshList(): void {
+  if (!listEl) {
+    return;
+  }
+  const filtered = visibleClips();
+  updateListVisibility(filtered);
+  renderClipList(filtered, listEl, handlers, {
+    highlightQuery: uiState.query,
+    tags: allTags,
+    virtualPage,
+  });
+  setupVirtualObserver();
+  updateFooterCounter();
 }
 
 const handlers: ClipListHandlers = {
@@ -115,6 +191,7 @@ const handlers: ClipListHandlers = {
           allClips[index] = response.clip;
         }
         clearError();
+        virtualPage = 0;
         refreshList();
       } catch (error) {
         showError(error instanceof Error ? error.message : String(error));
@@ -130,13 +207,148 @@ const handlers: ClipListHandlers = {
         await sendMessage({ type: 'delete_clip', id });
         allClips = allClips.filter((item) => item.id !== id);
         clearError();
+        virtualPage = 0;
         refreshList();
       } catch (error) {
         showError(error instanceof Error ? error.message : String(error));
       }
     })();
   },
+  onTagAdd: (clipId, tagId) => {
+    void (async () => {
+      const clip = allClips.find((item) => item.id === clipId);
+      if (!clip || clip.tag_ids.includes(tagId)) {
+        return;
+      }
+      const nextTags = [...clip.tag_ids, tagId];
+      await updateClip(clipId, { tag_ids: nextTags });
+      clip.tag_ids = nextTags;
+      refreshList();
+    })();
+  },
+  onTagCreate: (clipId, name, color) => {
+    void (async () => {
+      const tag = await createTag(name, color);
+      allTags = await listTags();
+      const clip = allClips.find((item) => item.id === clipId);
+      if (clip) {
+        const nextTags = [...clip.tag_ids, tag.id];
+        await updateClip(clipId, { tag_ids: nextTags });
+        clip.tag_ids = nextTags;
+      }
+      renderTagFilterChips();
+      refreshList();
+    })();
+  },
+  onTranslate: (clip, targetLang) => {
+    void (async () => {
+      const settings = await getItem<unknown>(STORAGE_KEYS.settings, null);
+      if (!isSettings(settings) || !settings.gemini_api_key) {
+        showError('Gemini API key is not configured');
+        return;
+      }
+      try {
+        const text = await translateClip(clip, targetLang, settings.gemini_api_key);
+        if (translateBody) {
+          translateBody.textContent = text;
+        }
+        if (translateModal) {
+          translateModal.dataset.translation = text;
+          translateModal.showModal();
+        }
+      } catch (error) {
+        showError(error instanceof Error ? error.message : String(error));
+      }
+    })();
+  },
 };
+
+function renderTagFilterChips(): void {
+  const container = document.querySelector<HTMLElement>('#tag-filters');
+  if (!container) {
+    return;
+  }
+  container.replaceChildren();
+  for (const tag of allTags) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'filter-chip tag-chip-filter';
+    button.dataset.tagId = tag.id;
+    button.textContent = tag.name;
+    button.style.borderColor = tag.color;
+    button.classList.toggle('is-active', uiState.tagIds.includes(tag.id));
+    button.addEventListener('click', () => {
+      if (uiState.tagIds.includes(tag.id)) {
+        uiState.tagIds = uiState.tagIds.filter((id) => id !== tag.id);
+      } else {
+        uiState.tagIds = [...uiState.tagIds, tag.id];
+      }
+      virtualPage = 0;
+      void persistUiState();
+      syncFilterUi();
+      refreshList();
+    });
+    container.append(button);
+  }
+}
+
+function bindToolbar(): void {
+  document.querySelectorAll<HTMLButtonElement>('[data-type-filter]').forEach((button) => {
+    button.addEventListener('click', () => {
+      uiState.type = (button.dataset.typeFilter ?? 'all') as ClipTypeFilter;
+      virtualPage = 0;
+      void persistUiState();
+      syncFilterUi();
+      refreshList();
+    });
+  });
+
+  document.querySelectorAll<HTMLButtonElement>('[data-date-filter]').forEach((button) => {
+    button.addEventListener('click', () => {
+      uiState.dateRange = (button.dataset.dateFilter ?? 'all') as DateRangeFilter;
+      virtualPage = 0;
+      void persistUiState();
+      syncFilterUi();
+      refreshList();
+    });
+  });
+
+  document.querySelectorAll<HTMLButtonElement>('[data-sort]').forEach((button) => {
+    button.addEventListener('click', () => {
+      uiState.sort = (button.dataset.sort ?? 'pinned_first') as SortMode;
+      virtualPage = 0;
+      void persistUiState();
+      syncFilterUi();
+      refreshList();
+    });
+  });
+
+  searchEl?.addEventListener('input', () => {
+    uiState.query = searchEl.value;
+    virtualPage = 0;
+    void persistUiState();
+    refreshList();
+  });
+
+  clearSearchEl?.addEventListener('click', () => {
+    uiState.query = '';
+    if (searchEl) {
+      searchEl.value = '';
+      searchEl.focus();
+    }
+    void persistUiState();
+    refreshList();
+  });
+
+  searchEl?.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      uiState.query = '';
+      searchEl.value = '';
+      void persistUiState();
+      refreshList();
+    }
+  });
+}
 
 async function loadClips(): Promise<void> {
   const loading = document.querySelector<HTMLElement>('#loading');
@@ -159,8 +371,7 @@ function applyStatusBadge(tier: 'free' | 'trial' | 'premium'): void {
   if (!badge) {
     return;
   }
-  const label = tier.toUpperCase();
-  badge.textContent = label;
+  badge.textContent = tier.toUpperCase();
   badge.className = `tier-${tier}`;
 }
 
@@ -168,6 +379,11 @@ async function bootstrap(): Promise<void> {
   if (!listEl) {
     return;
   }
+
+  uiState = await loadPopupState();
+  allTags = await listTags();
+  renderTagFilterChips();
+  syncFilterUi();
 
   const license = await getLicense();
   currentTier = license.tier;
@@ -189,11 +405,27 @@ async function bootstrap(): Promise<void> {
     });
   }
 
-  if (searchEl) {
-    bindSearch(searchEl, () => allClips, () => {
-      refreshList();
-    });
-  }
+  bindToolbar();
+
+  bindKeyboardNavigation({
+    listEl,
+    searchEl,
+    getItemCount: () => listEl.querySelectorAll('.clip-item').length,
+    getClipIdAt: (index) => {
+      const item = listEl.querySelectorAll<HTMLElement>('.clip-item')[index];
+      return item?.dataset.clipId;
+    },
+    handlers,
+  });
+
+  translateCopyBtn?.addEventListener('click', async () => {
+    const text = translateModal?.dataset.translation ?? translateBody?.textContent ?? '';
+    if (!text) {
+      return;
+    }
+    await navigator.clipboard.writeText(text);
+    showToast('Copied translation');
+  });
 
   try {
     await loadClips();
