@@ -10,6 +10,11 @@ export default defineConfig({
   plugins: [crx({ manifest })],
   build: {
     outDir: 'dist',
+    rollupOptions: {
+      input: {
+        optionsTags: path.resolve(__dirname, 'src/options/tags.html'),
+      },
+    },
   },
   resolve: {
     alias: {
