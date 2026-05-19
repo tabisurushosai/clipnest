@@ -1,1 +1,49 @@
-<!doctype html><html><body><div id="app"></div><script type="module" src="./main.ts"></script></body></html>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Clipnest Settings</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 640px;
+        margin: 24px auto;
+        padding: 0 16px;
+      }
+      label {
+        display: block;
+        margin: 16px 0 8px;
+        font-weight: 600;
+      }
+      input[type='password'],
+      input[type='text'] {
+        width: 100%;
+        padding: 8px;
+      }
+      .row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      nav {
+        margin-bottom: 24px;
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <a id="tag-manager-link" href="tags.html">Tag manager</a>
+    </nav>
+    <h1>Clipnest Settings</h1>
+    <section>
+      <label class="row">
+        <input id="ai-enabled" type="checkbox" />
+        AI 機能を有効化 (Premium のみ)
+      </label>
+      <label for="gemini-api-key">Gemini API key</label>
+      <input id="gemini-api-key" type="password" autocomplete="off" placeholder="BYO API key" />
+      <p>Monthly AI calls: <span id="ai-usage">0</span></p>
+    </section>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>
