@@ -1,5 +1,5 @@
 import { getAiUsage } from '../lib/ai_usage';
-import { openPaymentPage } from '../lib/billing';
+import { openPaymentPage, verifyLicense } from '../lib/billing';
 import { getSettings, updateSettings } from '../lib/db';
 import { getLicense, TRIAL_DURATION_MS, type LicenseTier } from '../lib/license';
 import { removeItem, setItem, STORAGE_KEYS } from '../lib/storage';
@@ -27,6 +27,8 @@ const extensionVersion = document.querySelector<HTMLElement>('#extension-version
 const licenseTierText = document.querySelector<HTMLElement>('#license-tier');
 const trialDaysRemaining = document.querySelector<HTMLElement>('#trial-days-remaining');
 const purchaseButton = document.querySelector<HTMLButtonElement>('#purchase-button');
+const verifyLicenseButton = document.querySelector<HTMLButtonElement>('#verify-license-button');
+const licenseKeyInput = document.querySelector<HTMLInputElement>('#license-key');
 
 function showToast(message = 'Saved'): void {
   if (!toast) {
@@ -94,6 +96,9 @@ async function refresh(): Promise<void> {
   applyTierLocks(license.tier);
   if (purchaseButton) {
     purchaseButton.disabled = false;
+  }
+  if (verifyLicenseButton) {
+    verifyLicenseButton.disabled = false;
   }
 }
 
@@ -239,6 +244,22 @@ apiKeyInput?.addEventListener('change', () => {
 
 purchaseButton?.addEventListener('click', () => {
   openPaymentPage();
+});
+
+verifyLicenseButton?.addEventListener('click', () => {
+  const key = licenseKeyInput?.value.trim();
+  if (!key) {
+    showToast('Enter license key');
+    return;
+  }
+  void verifyLicense(key)
+    .then((result) => {
+      showToast(result.valid ? 'License activated' : 'Invalid license');
+      return refresh();
+    })
+    .catch((error) => {
+      showToast(error instanceof Error ? error.message : String(error));
+    });
 });
 
 if (tagManagerLink) {
