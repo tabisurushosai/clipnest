@@ -19,6 +19,15 @@ export function extractVariables(body: string): string[] {
   return [...variables];
 }
 
+export function fillTemplate(template: Template, values: Record<string, string>): string {
+  return template.body.replace(/\{\{([A-Za-z0-9_]+)\}\}/g, (match, name: string) => {
+    if (!Object.prototype.hasOwnProperty.call(values, name)) {
+      return match;
+    }
+    return values[name];
+  });
+}
+
 async function loadTemplates(): Promise<Template[]> {
   const raw = await getItem<unknown>(STORAGE_KEYS.templates, []);
   if (!Array.isArray(raw)) {

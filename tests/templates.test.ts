@@ -4,10 +4,12 @@ import {
   createTemplate,
   deleteTemplate,
   extractVariables,
+  fillTemplate,
   incrementUseCount,
   listTemplates,
   updateTemplate,
 } from '../src/lib/templates';
+import type { Template } from '../src/lib/types';
 
 type MockGlobal = typeof globalThis & { __mockStorage?: Record<string, unknown> };
 
@@ -67,5 +69,34 @@ describe('extractVariables', () => {
     await updateTemplate(template.id, { body: 'Order {{order_id}} for {{name}}' });
     const [updated] = await listTemplates();
     expect(updated.variables).toEqual(['order_id', 'name']);
+  });
+});
+
+const fillSample: Template = {
+  id: 't',
+  title: 'Sample',
+  body: 'Hello {{name}}, order {{order_id}}',
+  category: 'Other',
+  variables: ['name', 'order_id'],
+  use_count: 0,
+  created_at: 1,
+  updated_at: 1,
+};
+
+describe('fillTemplate', () => {
+  it('fills all variables', () => {
+    expect(fillTemplate(fillSample, { name: 'Yuki', order_id: 'A1' })).toBe(
+      'Hello Yuki, order A1',
+    );
+  });
+
+  it('leaves missing variables unchanged', () => {
+    expect(fillTemplate(fillSample, { name: 'Yuki' })).toBe(
+      'Hello Yuki, order {{order_id}}',
+    );
+  });
+
+  it('leaves template unchanged for empty values', () => {
+    expect(fillTemplate(fillSample, {})).toBe(fillSample.body);
   });
 });
