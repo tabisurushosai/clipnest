@@ -39,6 +39,11 @@
     <nav><a href="index.html">← Settings</a></nav>
     <h1>Template manager</h1>
     <p id="template-limit" class="muted"></p>
+    <div>
+      <button id="export-templates" type="button">JSON export</button>
+      <button id="import-templates" type="button">JSON import</button>
+      <input id="import-file" type="file" accept="application/json" hidden />
+    </div>
     <form id="template-form">
       <input id="template-title" type="text" placeholder="Title" required />
       <select id="template-category"></select>
