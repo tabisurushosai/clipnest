@@ -1,4 +1,5 @@
 import { getAiUsage } from '../lib/ai_usage';
+import { openPaymentPage } from '../lib/billing';
 import { getSettings, updateSettings } from '../lib/db';
 import { getLicense, TRIAL_DURATION_MS, type LicenseTier } from '../lib/license';
 import { removeItem, setItem, STORAGE_KEYS } from '../lib/storage';
@@ -25,6 +26,7 @@ const resetAllDataButton = document.querySelector<HTMLButtonElement>('#reset-all
 const extensionVersion = document.querySelector<HTMLElement>('#extension-version');
 const licenseTierText = document.querySelector<HTMLElement>('#license-tier');
 const trialDaysRemaining = document.querySelector<HTMLElement>('#trial-days-remaining');
+const purchaseButton = document.querySelector<HTMLButtonElement>('#purchase-button');
 
 function showToast(message = 'Saved'): void {
   if (!toast) {
@@ -90,6 +92,9 @@ async function refresh(): Promise<void> {
     input.checked = input.value === settings.theme;
   });
   applyTierLocks(license.tier);
+  if (purchaseButton) {
+    purchaseButton.disabled = false;
+  }
 }
 
 function applyTierLocks(tier: LicenseTier): void {
@@ -230,6 +235,10 @@ apiKeyVisibilityButton?.addEventListener('click', () => {
 apiKeyInput?.addEventListener('change', () => {
   const value = apiKeyInput.value.trim();
   void updateSettings({ gemini_api_key: value || undefined }).then(refresh);
+});
+
+purchaseButton?.addEventListener('click', () => {
+  openPaymentPage();
 });
 
 if (tagManagerLink) {

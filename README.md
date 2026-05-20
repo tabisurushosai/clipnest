@@ -61,6 +61,11 @@ Clipnest はページ上のコピー操作を監視して履歴に保存しま�
 | `npm run format` | Prettier（`src/**/*.{ts,tsx,css,json}`） |
 | `npm run typecheck` | `tsc --noEmit` |
 
+## リリース前チェック
+
+- `src/lib/billing.ts` の `PAYMENT_URL` を実際の Stripe Payment Link に差し替えること
+- `src/lib/billing.ts` の `VERIFY_URL` を本番のライセンス検証 API に差し替えること
+
 ## ディレクトリ構造
 
 仕様書 §2 アーキテクチャに基づく構成です。
