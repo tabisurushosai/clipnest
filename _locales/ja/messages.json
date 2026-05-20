@@ -13,5 +13,35 @@
   },
   "empty_state": {
     "message": "まだクリップがありません。Web ページで何かをコピーすると、ここに表示されます。"
+  },
+  "no_matches": {
+    "message": "一致する結果がありません"
+  },
+  "clear_search": {
+    "message": "検索をクリア"
+  },
+  "templates_button": {
+    "message": "テンプレート"
+  },
+  "copied_toast": {
+    "message": "コピーしました"
+  },
+  "trial_banner": {
+    "message": "Trial: あと $DAYS$ 日 ($5 で永久解放)",
+    "placeholders": {
+      "days": { "content": "$1", "example": "3" }
+    }
+  },
+  "downgrade_notice": {
+    "message": "トライアルが終了しました。Premium で全機能を利用できます。"
+  },
+  "premium_required": {
+    "message": "この機能は Premium が必要です"
+  },
+  "shortcut_help_title": {
+    "message": "ショートカット"
+  },
+  "shortcut_help_body": {
+    "message": "chrome://extensions/shortcuts をアドレスバーに貼り付けて設定してください。"
   }
 }

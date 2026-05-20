@@ -13,5 +13,35 @@
   },
   "empty_state": {
     "message": "No clips yet. Copy something from any webpage and it will appear here."
+  },
+  "no_matches": {
+    "message": "No matches"
+  },
+  "clear_search": {
+    "message": "Clear search"
+  },
+  "templates_button": {
+    "message": "Templates"
+  },
+  "copied_toast": {
+    "message": "Copied"
+  },
+  "trial_banner": {
+    "message": "Trial: $DAYS$ days left (unlock forever for $5)",
+    "placeholders": {
+      "days": { "content": "$1", "example": "3" }
+    }
+  },
+  "downgrade_notice": {
+    "message": "Your trial has ended. Upgrade to Premium for full access."
+  },
+  "premium_required": {
+    "message": "This feature requires Premium"
+  },
+  "shortcut_help_title": {
+    "message": "Shortcuts"
+  },
+  "shortcut_help_body": {
+    "message": "Paste chrome://extensions/shortcuts into the address bar to configure shortcuts."
   }
 }

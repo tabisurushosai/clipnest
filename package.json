@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest",
     "test:run": "vitest run",
+    "i18n:check": "bash scripts/check_i18n.sh",
     "test:coverage": "vitest run --coverage",
     "release": "bash scripts/build_release.sh",
     "format": "prettier --write 'src/**/*.{ts,tsx,css,json}'"
