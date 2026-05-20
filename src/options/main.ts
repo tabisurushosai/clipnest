@@ -22,6 +22,7 @@ const popupShortcut = document.querySelector<HTMLElement>('#popup-shortcut');
 const storageUsageText = document.querySelector<HTMLElement>('#storage-usage-text');
 const deleteAllClipsButton = document.querySelector<HTMLButtonElement>('#delete-all-clips');
 const resetAllDataButton = document.querySelector<HTMLButtonElement>('#reset-all-data');
+const extensionVersion = document.querySelector<HTMLElement>('#extension-version');
 
 function showToast(message = 'Saved'): void {
   if (!toast) {
@@ -114,6 +115,17 @@ async function refreshStorageUsage(): Promise<void> {
   const bytes = storage?.getBytesInUse ? await storage.getBytesInUse(null) : 0;
   if (storageUsageText) {
     storageUsageText.textContent = `${bytes} bytes`;
+  }
+}
+
+function renderVersion(): void {
+  const runtime = (
+    globalThis as {
+      chrome?: { runtime?: { getManifest?: () => { version?: string } } };
+    }
+  ).chrome?.runtime;
+  if (extensionVersion) {
+    extensionVersion.textContent = runtime?.getManifest?.().version ?? '0.1.0';
   }
 }
 
@@ -217,3 +229,4 @@ if (templateManagerLink) {
 void refresh();
 void loadShortcutInfo();
 void refreshStorageUsage();
+renderVersion();
