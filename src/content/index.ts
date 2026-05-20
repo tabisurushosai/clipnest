@@ -1,4 +1,3 @@
-/* global document, location, Node, ClipboardEvent, HTMLInputElement, Element, URL, FileReader, Blob */
 import { sendMessage } from '../lib/messages';
 import { isClipboardUrl } from '../lib/url';
 

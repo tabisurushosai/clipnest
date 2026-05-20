@@ -5,7 +5,7 @@ import { isTemplate, normalizeTemplateCategory } from './types';
 export type TemplateInput = {
   title: string;
   body: string;
-  category?: TemplateCategory | string;
+  category?: TemplateCategory;
 };
 
 export function extractVariables(body: string): string[] {

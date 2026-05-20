@@ -2,6 +2,7 @@ import eslint from '@eslint/js';
 import tsPlugin from '@typescript-eslint/eslint-plugin';
 import tsParser from '@typescript-eslint/parser';
 import eslintConfigPrettier from 'eslint-config-prettier';
+import globals from 'globals';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -42,6 +43,12 @@ export default [
         project: true,
         tsconfigRootDir: __dirname,
       },
+      globals: {
+        ...globals.browser,
+        ...globals.webextensions,
+        ...globals.node,
+        ...globals.es2022,
+      },
     },
     plugins: {
       '@typescript-eslint': tsPlugin,
@@ -50,6 +57,24 @@ export default [
       ...tsPlugin.configs.recommended.rules,
       ...relaxTypeCheckedRules(tsPlugin.configs['recommended-type-checked'].rules),
       '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      ],
+    },
+  },
+  {
+    files: ['tests/**/*.ts'],
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+        ...globals.vitest,
+        ...globals.es2022,
+      },
+    },
+    rules: {
+      '@typescript-eslint/require-await': 'off',
     },
   },
   eslintConfigPrettier,

@@ -3,10 +3,10 @@ import { getMessage } from '../lib/i18n';
 import type { LicenseStatus } from '../lib/license';
 import { getTrialDaysRemaining, shouldShowTrialWarning } from '../lib/trial_ui';
 
-export async function updateTrialBanner(
+export function updateTrialBanner(
   license: LicenseStatus,
   trialBanner: HTMLElement | null,
-): Promise<void> {
+): void {
   if (!trialBanner) {
     return;
   }

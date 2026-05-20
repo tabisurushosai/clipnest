@@ -492,7 +492,7 @@ async function bootstrap(): Promise<void> {
   currentTier = license.tier;
   applyStatusBadge(license.tier);
   updateFooterCounter();
-  await updateTrialBanner(license, trialBanner);
+  updateTrialBanner(license, trialBanner);
   await updateDowngradeBanner(license, downgradeBanner);
   bindTrialBannerClick(trialBanner);
 

@@ -8,6 +8,7 @@ import {
   incrementUseCount,
   listTemplates,
   updateTemplate,
+  type TemplateInput,
 } from '../src/lib/templates';
 import type { Template } from '../src/lib/types';
 
@@ -54,7 +55,7 @@ describe('templates CRUD', () => {
       title: 'Unknown category',
       body: 'Body',
       category: 'Custom',
-    });
+    } as unknown as TemplateInput);
     expect(created.category).toBe('Other');
   });
 

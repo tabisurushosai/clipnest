@@ -244,8 +244,4 @@ export function renderClipList(
     sentinel.textContent = 'Loading more…';
     listEl.append(sentinel);
   }
-
-  if (virtualized && !hasMore && sortedClips.length > VIRTUAL_THRESHOLD) {
-    void totalPages(sortedClips.length);
-  }
 }

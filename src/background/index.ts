@@ -127,7 +127,6 @@ export async function refreshBadge(): Promise<void> {
   action.setBadgeText({ text: count >= 100 ? '99+' : String(count) });
 }
 
-/* eslint-disable no-undef -- runs in page context when injected via executeScript */
 /** Injected into the active tab via chrome.scripting.executeScript */
 async function injectWriteImage(dataUrl: string): Promise<void> {
   const response = await fetch(dataUrl);
@@ -147,7 +146,6 @@ async function injectWriteText(text: string, clipType: string): Promise<void> {
   }
   await navigator.clipboard.writeText(text);
 }
-/* eslint-enable no-undef */
 
 async function copyClipToClipboard(clip: Clip): Promise<{ ok: true } | { ok: false; error: string }> {
   const chromeApi = getChrome();

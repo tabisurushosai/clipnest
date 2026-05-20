@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { sortClips } from '../src/popup/sort';
-import type { Clip } from '../lib/types';
+import type { Clip } from '../src/lib/types';
 
 function makeClip(overrides: Partial<Clip> & Pick<Clip, 'id'>): Clip {
   return {

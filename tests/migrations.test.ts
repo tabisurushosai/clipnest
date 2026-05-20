@@ -12,7 +12,7 @@ beforeEach(() => {
   const g = globalThis as MockGlobal;
   g.__mockStorage = {};
   g.__mockStorageListeners = new Set();
-  g.chrome = { runtime: { id: 'test-extension-id' } };
+  g.chrome = { runtime: { id: 'test-extension-id' } } as unknown as typeof chrome;
 });
 
 describe('migrations', () => {

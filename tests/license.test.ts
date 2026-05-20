@@ -6,8 +6,6 @@ import {
   getMaxClips,
   TRIAL_DURATION_MS,
 } from '../src/lib/license';
-import { STORAGE_KEYS } from '../src/lib/storage';
-
 type MockGlobal = typeof globalThis & {
   __mockStorage?: Record<string, unknown>;
   __mockStorageListeners?: Set<(key: string, newValue: unknown) => void>;
