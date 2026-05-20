@@ -3,7 +3,6 @@ import './popup.css';
 import { translateClip } from '../lib/ai';
 import { updateClip } from '../lib/db';
 import { sendMessage } from '../lib/messages';
-import { getItem, STORAGE_KEYS } from '../lib/storage';
 import { createTag, listTags } from '../lib/tags';
 import { requirePremium } from '../lib/premium_gate';
 import {
@@ -13,7 +12,12 @@ import {
 } from '../lib/templates';
 import type { Clip, Tag, Template } from '../lib/types';
 import { isSettings } from '../lib/types';
+import { getMessage } from '../lib/i18n';
 import { getLicense } from '../lib/license';
+import { getItem, STORAGE_KEYS } from '../lib/storage';
+import { bindTrialBannerClick, updateTrialBanner } from './trial_banner';
+import { updateDowngradeBanner } from './downgrade_banner';
+import { applyPopupLocalizedStrings } from './i18n_ui';
 import { updateClipCounterElement } from './counter';
 import { filterClips, type ClipTypeFilter, type DateRangeFilter } from './filter';
 import { bindKeyboardNavigation } from './keyboard';
@@ -44,6 +48,10 @@ const templateVariableForm =
 const templateVariableTitle = document.querySelector<HTMLElement>('#template-variable-title');
 const templateVariableFields = document.querySelector<HTMLElement>('#template-variable-fields');
 const premiumModal = document.querySelector<HTMLDialogElement>('#premium-modal');
+const trialBanner = document.querySelector<HTMLElement>('#trial-banner');
+const downgradeBanner = document.querySelector<HTMLElement>('#downgrade-banner');
+const shortcutHelpButton = document.querySelector<HTMLButtonElement>('#shortcut-help-button');
+const shortcutHelpModal = document.querySelector<HTMLDialogElement>('#shortcut-help-modal');
 
 let allClips: Clip[] = [];
 let allTags: Tag[] = [];
@@ -70,7 +78,7 @@ function clearError(): void {
   errorEl.textContent = '';
 }
 
-function showToast(message = 'Copied'): void {
+function showToast(message = getMessage('copied_toast')): void {
   if (!toastEl) {
     return;
   }
@@ -265,7 +273,7 @@ const handlers: ClipListHandlers = {
         }
         clearError();
         refreshList();
-        showToast('Copied');
+        showToast();
       } catch (error) {
         showError(error instanceof Error ? error.message : String(error));
       }
@@ -478,10 +486,15 @@ async function bootstrap(): Promise<void> {
   renderTagFilterChips();
   syncFilterUi();
 
+  applyPopupLocalizedStrings();
+
   const license = await getLicense();
   currentTier = license.tier;
   applyStatusBadge(license.tier);
   updateFooterCounter();
+  await updateTrialBanner(license, trialBanner);
+  await updateDowngradeBanner(license, downgradeBanner);
+  bindTrialBannerClick(trialBanner);
 
   const storageBar = document.querySelector<HTMLProgressElement>('#storage-usage');
   if (storageBar) {
@@ -518,6 +531,10 @@ async function bootstrap(): Promise<void> {
     }
     await navigator.clipboard.writeText(text);
     showToast('Copied translation');
+  });
+
+  shortcutHelpButton?.addEventListener('click', () => {
+    shortcutHelpModal?.showModal();
   });
 
   templatesButton?.addEventListener('click', async () => {
