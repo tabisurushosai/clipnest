@@ -8,7 +8,9 @@ import {
   pruneClips,
   saveClip,
 } from '../lib/db';
+import { getLicense, getMaxClips } from '../lib/license';
 import { runMigrations } from '../lib/migrations';
+import { getClipIdAtIndex, wouldDedupeClipSave } from '../lib/quick_copy';
 import { prepareHtmlClipContent } from '../lib/html';
 import { MAX_IMAGE_BYTES, prepareImageClipContent } from '../lib/image';
 import { scheduleAiForClip } from '../lib/ai_pipeline';
@@ -69,6 +71,10 @@ type ChromeRuntime = {
   };
 };
 
+type ChromeCommands = {
+  onCommand: { addListener: (callback: (command: string) => void) => void };
+};
+
 type ChromeApi = {
   runtime?: ChromeRuntime;
   tabs?: ChromeTabs;
@@ -76,6 +82,7 @@ type ChromeApi = {
   alarms?: ChromeAlarms;
   action?: ChromeAction;
   storage?: ChromeStorage;
+  commands?: ChromeCommands;
 };
 
 function getChrome(): ChromeApi | undefined {
@@ -236,6 +243,15 @@ async function handleMessage(msg: Msg): Promise<MsgResponse> {
       if (!prepared) {
         throw new Error('save_clip rejected');
       }
+      const license = await getLicense();
+      const existing = await listClips();
+      if (
+        license.tier === 'free' &&
+        existing.length >= getMaxClips('free') &&
+        !wouldDedupeClipSave(existing, prepared.content)
+      ) {
+        throw new Error('Clip limit reached. Upgrade to Premium.');
+      }
       const clip = await saveClip(prepared);
       scheduleAiForClip(clip);
       await refreshBadge();
@@ -298,6 +314,26 @@ chromeApi?.alarms?.onAlarm.addListener((alarm) => {
 });
 
 void runPruneFromSettings();
+
+async function copyClipByPosition(index: number): Promise<void> {
+  const clips = await listClips();
+  const clipId = getClipIdAtIndex(clips, index);
+  if (!clipId) {
+    return;
+  }
+  await handleCopyClip(clipId);
+}
+
+chromeApi?.commands?.onCommand?.addListener((command) => {
+  if (command === 'copy_last') {
+    void copyClipByPosition(0);
+    return;
+  }
+  const match = /^copy_(\d)$/.exec(command);
+  if (match) {
+    void copyClipByPosition(Number(match[1]) - 1);
+  }
+});
 
 chromeRuntime?.onMessage.addListener((message, _sender, sendResponse) => {
   if (!isMsg(message)) {

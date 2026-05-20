@@ -42,6 +42,24 @@
         "default": "Ctrl+Shift+V",
         "mac": "Command+Shift+V"
       }
+    },
+    "copy_last": {
+      "description": "Copy the most recent clip"
+    },
+    "copy_1": { "description": "Copy clip #1" },
+    "copy_2": { "description": "Copy clip #2" },
+    "copy_3": { "description": "Copy clip #3" },
+    "copy_4": { "description": "Copy clip #4" },
+    "copy_5": { "description": "Copy clip #5" },
+    "copy_6": { "description": "Copy clip #6" },
+    "copy_7": { "description": "Copy clip #7" },
+    "copy_8": { "description": "Copy clip #8" },
+    "copy_9": { "description": "Copy clip #9" }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["legal/*"],
+      "matches": ["<all_urls>"]
     }
-  }
+  ]
 }
