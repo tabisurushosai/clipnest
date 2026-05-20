@@ -60,6 +60,18 @@ Clipnest はページ上のコピー操作を監視して履歴に保存しま�
 | `npm run lint` | ESLint（TypeScript） |
 | `npm run format` | Prettier（`src/**/*.{ts,tsx,css,json}`） |
 | `npm run typecheck` | `tsc --noEmit` |
+| `npm run test:run` | Vitest（単発） |
+| `npm run i18n:check` | `_locales` のキー整合性チェック |
+
+## キーボードショートカット
+
+| コマンド | 説明 | デフォルトキー |
+|----------|------|----------------|
+| `open_popup` | ポップアップを開く | macOS: `Command+Shift+V` / その他: `Ctrl+Shift+V` |
+| `copy_last` | 直近クリップをコピー | （未割り当て・要設定） |
+| `copy_1` … `copy_9` | 新しい順に N 番目のクリップをコピー | （未割り当て・要設定） |
+
+ショートカットの変更は Chrome の `chrome://extensions/shortcuts` で行います（アドレスバーに貼り付け）。
 
 ## リリース前チェック
 
