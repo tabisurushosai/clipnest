@@ -17,6 +17,7 @@ const templateManagerLink =
   document.querySelector<HTMLAnchorElement>('#template-manager-link');
 const sectionButtons = document.querySelectorAll<HTMLButtonElement>('[data-section-target]');
 const toast = document.querySelector<HTMLElement>('#options-toast');
+const popupShortcut = document.querySelector<HTMLElement>('#popup-shortcut');
 
 function showToast(message = 'Saved'): void {
   if (!toast) {
@@ -77,6 +78,23 @@ function applyTierLocks(tier: LicenseTier): void {
   document.querySelectorAll<HTMLButtonElement>('[data-premium-only]').forEach((button) => {
     button.disabled = tier === 'free';
   });
+}
+
+async function loadShortcutInfo(): Promise<void> {
+  const commandsApi = (
+    globalThis as {
+      chrome?: {
+        commands?: {
+          getAll: () => Promise<Array<{ name?: string; shortcut?: string }>>;
+        };
+      };
+    }
+  ).chrome?.commands;
+  const commands = commandsApi ? await commandsApi.getAll() : [];
+  const openPopup = commands.find((command) => command.name === '_execute_action');
+  if (popupShortcut) {
+    popupShortcut.textContent = openPopup?.shortcut || 'Command+Shift+V / Ctrl+Shift+V';
+  }
 }
 
 document.querySelectorAll<HTMLButtonElement>('[data-setting-max-clips]').forEach((button) => {
@@ -145,3 +163,4 @@ if (templateManagerLink) {
 }
 
 void refresh();
+void loadShortcutInfo();
