@@ -7,6 +7,9 @@ export const DEFAULT_SETTINGS: Settings = {
   retention_days: 7,
   theme: 'auto',
   ai_enabled: false,
+  ai_auto_title: true,
+  ai_auto_category: true,
+  ai_auto_summary: true,
   shortcuts: { open_popup: 'Command+Shift+V' },
 };
 
@@ -147,7 +150,14 @@ export async function pruneClips(maxCount: number, retentionMs: number): Promise
 export async function getSettings(): Promise<Settings> {
   const raw = await getItem<unknown>(STORAGE_KEYS.settings, null);
   if (isSettings(raw)) {
-    return raw;
+    return {
+      ...DEFAULT_SETTINGS,
+      ...raw,
+      shortcuts: {
+        ...DEFAULT_SETTINGS.shortcuts,
+        ...raw.shortcuts,
+      },
+    };
   }
   await setItem(STORAGE_KEYS.settings, DEFAULT_SETTINGS);
   return { ...DEFAULT_SETTINGS };

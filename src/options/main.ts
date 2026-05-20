@@ -5,6 +5,12 @@ import type { Theme } from '../lib/types';
 
 const aiToggle = document.querySelector<HTMLInputElement>('#ai-enabled');
 const apiKeyInput = document.querySelector<HTMLInputElement>('#gemini-api-key');
+const apiKeyVisibilityButton = document.querySelector<HTMLButtonElement>(
+  '#toggle-api-key-visibility',
+);
+const aiAutoTitle = document.querySelector<HTMLInputElement>('#ai-auto-title');
+const aiAutoCategory = document.querySelector<HTMLInputElement>('#ai-auto-category');
+const aiAutoSummary = document.querySelector<HTMLInputElement>('#ai-auto-summary');
 const usageEl = document.querySelector<HTMLElement>('#ai-usage');
 const tagManagerLink = document.querySelector<HTMLAnchorElement>('#tag-manager-link');
 const templateManagerLink =
@@ -48,6 +54,15 @@ async function refresh(): Promise<void> {
   }
   if (apiKeyInput) {
     apiKeyInput.value = settings.gemini_api_key ?? '';
+  }
+  if (aiAutoTitle) {
+    aiAutoTitle.checked = settings.ai_auto_title;
+  }
+  if (aiAutoCategory) {
+    aiAutoCategory.checked = settings.ai_auto_category;
+  }
+  if (aiAutoSummary) {
+    aiAutoSummary.checked = settings.ai_auto_summary;
   }
   if (usageEl) {
     usageEl.textContent = String(usage);
@@ -95,6 +110,26 @@ document.querySelectorAll<HTMLInputElement>('input[name="theme"]').forEach((inpu
 
 aiToggle?.addEventListener('change', () => {
   void updateSettings({ ai_enabled: aiToggle.checked }).then(refresh);
+});
+
+aiAutoTitle?.addEventListener('change', () => {
+  void updateSettings({ ai_auto_title: aiAutoTitle.checked }).then(refresh);
+});
+
+aiAutoCategory?.addEventListener('change', () => {
+  void updateSettings({ ai_auto_category: aiAutoCategory.checked }).then(refresh);
+});
+
+aiAutoSummary?.addEventListener('change', () => {
+  void updateSettings({ ai_auto_summary: aiAutoSummary.checked }).then(refresh);
+});
+
+apiKeyVisibilityButton?.addEventListener('click', () => {
+  if (!apiKeyInput) {
+    return;
+  }
+  apiKeyInput.type = apiKeyInput.type === 'password' ? 'text' : 'password';
+  apiKeyVisibilityButton.textContent = apiKeyInput.type === 'password' ? 'Show' : 'Hide';
 });
 
 apiKeyInput?.addEventListener('change', () => {

@@ -134,6 +134,9 @@ export interface Settings {
   theme: Theme;
   /** AI 機能の有効化 */
   ai_enabled: boolean;
+  ai_auto_title: boolean;
+  ai_auto_category: boolean;
+  ai_auto_summary: boolean;
   /** キーボードショートカット */
   shortcuts: {
     /** ポップアップを開くショートカット */
@@ -157,6 +160,9 @@ export function isSettings(value: unknown): value is Settings {
     typeof record.theme === 'string' &&
     THEMES.includes(record.theme as Theme) &&
     typeof record.ai_enabled === 'boolean' &&
+    (record.ai_auto_title === undefined || typeof record.ai_auto_title === 'boolean') &&
+    (record.ai_auto_category === undefined || typeof record.ai_auto_category === 'boolean') &&
+    (record.ai_auto_summary === undefined || typeof record.ai_auto_summary === 'boolean') &&
     typeof shortcuts === 'object' &&
     shortcuts !== null &&
     typeof (shortcuts as Record<string, unknown>).open_popup === 'string' &&

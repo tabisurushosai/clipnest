@@ -51,14 +51,19 @@ export function scheduleAiForClip(clip: Clip): void {
     }
 
     try {
-      const title = await generateClipTitle(clip, apiKey);
-      const category = await generateClipCategory(clip, apiKey);
-      const patch: Partial<Clip> = {
-        ai_title: title,
-        ai_category: category,
-      };
+      const title = settings.ai_auto_title ? await generateClipTitle(clip, apiKey) : undefined;
+      const category = settings.ai_auto_category
+        ? await generateClipCategory(clip, apiKey)
+        : undefined;
+      const patch: Partial<Clip> = {};
+      if (title) {
+        patch.ai_title = title;
+      }
+      if (category) {
+        patch.ai_category = category;
+      }
       let summary: string | undefined;
-      if (shouldGenerateSummary(clip)) {
+      if (settings.ai_auto_summary && shouldGenerateSummary(clip)) {
         summary = await generateClipSummary(clip, apiKey);
         patch.ai_summary = summary;
       }

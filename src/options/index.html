@@ -104,7 +104,22 @@
             AI 機能を有効化 (Premium のみ)
           </label>
           <label for="gemini-api-key">Gemini API key</label>
-          <input id="gemini-api-key" type="password" autocomplete="off" placeholder="BYO API key" />
+          <div class="row">
+            <input id="gemini-api-key" type="password" autocomplete="off" placeholder="BYO API key" />
+            <button id="toggle-api-key-visibility" type="button">Show</button>
+          </div>
+          <label class="row">
+            <input id="ai-auto-title" type="checkbox" />
+            自動タイトル生成
+          </label>
+          <label class="row">
+            <input id="ai-auto-category" type="checkbox" />
+            自動カテゴリ生成
+          </label>
+          <label class="row">
+            <input id="ai-auto-summary" type="checkbox" />
+            自動要約生成
+          </label>
           <aside class="api-key-guide" aria-labelledby="api-key-guide-title">
             <h2 id="api-key-guide-title">BYO API key の取得手順</h2>
             <ol>
