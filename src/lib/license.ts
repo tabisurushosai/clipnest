@@ -8,6 +8,7 @@ export type LicenseStatus = {
   trial_start_ts: number | null;
   premium_activated_ts: number | null;
   license_key?: string;
+  extension_id?: string;
 };
 
 export const TRIAL_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
@@ -27,7 +28,8 @@ function isLicenseStatus(value: unknown): value is LicenseStatus {
     (record.tier === 'free' || record.tier === 'trial' || record.tier === 'premium') &&
     (record.trial_start_ts === null || typeof record.trial_start_ts === 'number') &&
     (record.premium_activated_ts === null || typeof record.premium_activated_ts === 'number') &&
-    (record.license_key === undefined || typeof record.license_key === 'string')
+    (record.license_key === undefined || typeof record.license_key === 'string') &&
+    (record.extension_id === undefined || typeof record.extension_id === 'string')
   );
 }
 
