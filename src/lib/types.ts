@@ -56,6 +56,36 @@ export function isTag(value: unknown): value is Tag {
   );
 }
 
+/** 定型文テンプレート */
+export interface Template {
+  id: string;
+  title: string;
+  body: string;
+  category: string;
+  variables: string[];
+  use_count: number;
+  created_at: number;
+  updated_at: number;
+}
+
+export function isTemplate(value: unknown): value is Template {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+  const record = value as Record<string, unknown>;
+  return (
+    typeof record.id === 'string' &&
+    typeof record.title === 'string' &&
+    typeof record.body === 'string' &&
+    typeof record.category === 'string' &&
+    Array.isArray(record.variables) &&
+    record.variables.every((variable) => typeof variable === 'string') &&
+    typeof record.use_count === 'number' &&
+    typeof record.created_at === 'number' &&
+    typeof record.updated_at === 'number'
+  );
+}
+
 /** UI テーマ */
 export type Theme = 'auto' | 'light' | 'dark';
 
