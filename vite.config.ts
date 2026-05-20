@@ -13,6 +13,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         optionsTags: path.resolve(__dirname, 'src/options/tags.html'),
+        optionsTemplates: path.resolve(__dirname, 'src/options/templates.html'),
       },
     },
   },

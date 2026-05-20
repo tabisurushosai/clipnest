@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Clipnest Templates</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 880px;
+        margin: 24px auto;
+        padding: 0 16px;
+      }
+      form,
+      .template-row {
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 12px;
+      }
+      input,
+      textarea,
+      select {
+        box-sizing: border-box;
+        display: block;
+        width: 100%;
+        margin: 6px 0 12px;
+        padding: 8px;
+      }
+      textarea {
+        min-height: 120px;
+      }
+      .muted {
+        color: #64748b;
+        font-size: 13px;
+      }
+    </style>
+  </head>
+  <body>
+    <nav><a href="index.html">← Settings</a></nav>
+    <h1>Template manager</h1>
+    <p id="template-limit" class="muted"></p>
+    <form id="template-form">
+      <input id="template-title" type="text" placeholder="Title" required />
+      <input id="template-category" type="text" placeholder="Category" />
+      <textarea id="template-body" placeholder="Body with {{variables}}" required></textarea>
+      <p>Variables: <span id="variable-preview">None</span></p>
+      <button id="template-submit" type="submit">Add template</button>
+    </form>
+    <section id="template-list" aria-label="Templates"></section>
+    <dialog id="premium-modal">
+      <p>Template creation beyond 3 templates requires Premium.</p>
+      <button type="button" onclick="this.closest('dialog')?.close()">Close</button>
+    </dialog>
+    <script type="module" src="./templates.ts"></script>
+  </body>
+</html>

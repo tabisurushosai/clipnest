@@ -6,6 +6,8 @@ const aiToggle = document.querySelector<HTMLInputElement>('#ai-enabled');
 const apiKeyInput = document.querySelector<HTMLInputElement>('#gemini-api-key');
 const usageEl = document.querySelector<HTMLElement>('#ai-usage');
 const tagManagerLink = document.querySelector<HTMLAnchorElement>('#tag-manager-link');
+const templateManagerLink =
+  document.querySelector<HTMLAnchorElement>('#template-manager-link');
 
 async function refresh(): Promise<void> {
   const [settings, license, usage] = await Promise.all([
@@ -37,6 +39,9 @@ apiKeyInput?.addEventListener('change', () => {
 
 if (tagManagerLink) {
   tagManagerLink.href = 'tags.html';
+}
+if (templateManagerLink) {
+  templateManagerLink.href = 'templates.html';
 }
 
 void refresh();
