@@ -8,6 +8,17 @@ export type TemplateInput = {
   category?: string;
 };
 
+export function extractVariables(body: string): string[] {
+  const variables = new Set<string>();
+  const pattern = /\{\{([A-Za-z0-9_]+)\}\}/g;
+  let match = pattern.exec(body);
+  while (match) {
+    variables.add(match[1]);
+    match = pattern.exec(body);
+  }
+  return [...variables];
+}
+
 async function loadTemplates(): Promise<Template[]> {
   const raw = await getItem<unknown>(STORAGE_KEYS.templates, []);
   if (!Array.isArray(raw)) {
@@ -28,7 +39,7 @@ export async function createTemplate(input: TemplateInput): Promise<Template> {
     title: input.title.trim(),
     body: input.body,
     category: input.category ?? 'Uncategorized',
-    variables: [],
+    variables: extractVariables(input.body),
     use_count: 0,
     created_at: now,
     updated_at: now,
@@ -53,6 +64,8 @@ export async function updateTemplate(id: string, patch: Partial<TemplateInput>):
     ...templates[index],
     ...patch,
     title: patch.title === undefined ? templates[index].title : patch.title.trim(),
+    variables:
+      patch.body === undefined ? templates[index].variables : extractVariables(patch.body),
     updated_at: Date.now(),
   };
   await persistTemplates(templates);
