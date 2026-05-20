@@ -71,6 +71,10 @@
         <button type="button" onclick="this.closest('dialog')?.close()">Close</button>
       </article>
     </dialog>
+    <dialog id="premium-modal">
+      <p>This feature requires Premium.</p>
+      <button type="button" onclick="this.closest('dialog')?.close()">Close</button>
+    </dialog>
     <div id="toast" hidden aria-live="polite">Copied</div>
     <script type="module" src="./main.ts"></script>
   </body>

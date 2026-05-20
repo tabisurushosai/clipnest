@@ -2,6 +2,7 @@ import { getAiUsage } from '../lib/ai_usage';
 import { openPaymentPage, verifyLicense } from '../lib/billing';
 import { getSettings, updateSettings } from '../lib/db';
 import { getLicense, TRIAL_DURATION_MS, type LicenseTier } from '../lib/license';
+import { requirePremium } from '../lib/premium_gate';
 import { removeItem, setItem, STORAGE_KEYS } from '../lib/storage';
 import type { Theme } from '../lib/types';
 
@@ -29,6 +30,8 @@ const trialDaysRemaining = document.querySelector<HTMLElement>('#trial-days-rema
 const purchaseButton = document.querySelector<HTMLButtonElement>('#purchase-button');
 const verifyLicenseButton = document.querySelector<HTMLButtonElement>('#verify-license-button');
 const licenseKeyInput = document.querySelector<HTMLInputElement>('#license-key');
+const premiumModal = document.querySelector<HTMLDialogElement>('#premium-modal');
+const premiumModalPurchase = document.querySelector<HTMLButtonElement>('#premium-modal-purchase');
 
 function showToast(message = 'Saved'): void {
   if (!toast) {
@@ -214,7 +217,15 @@ document.querySelectorAll<HTMLInputElement>('input[name="theme"]').forEach((inpu
 });
 
 aiToggle?.addEventListener('change', () => {
-  void updateSettings({ ai_enabled: aiToggle.checked }).then(refresh);
+  void (async () => {
+    if (aiToggle.checked && !(await requirePremium('ai'))) {
+      aiToggle.checked = false;
+      premiumModal?.showModal();
+      return;
+    }
+    await updateSettings({ ai_enabled: aiToggle.checked });
+    await refresh();
+  })();
 });
 
 aiAutoTitle?.addEventListener('change', () => {
@@ -243,6 +254,10 @@ apiKeyInput?.addEventListener('change', () => {
 });
 
 purchaseButton?.addEventListener('click', () => {
+  openPaymentPage();
+});
+
+premiumModalPurchase?.addEventListener('click', () => {
   openPaymentPage();
 });
 

@@ -5,6 +5,7 @@ import { updateClip } from '../lib/db';
 import { sendMessage } from '../lib/messages';
 import { getItem, STORAGE_KEYS } from '../lib/storage';
 import { createTag, listTags } from '../lib/tags';
+import { requirePremium } from '../lib/premium_gate';
 import {
   fillTemplate,
   incrementUseCount as incrementTemplateUseCount,
@@ -42,6 +43,7 @@ const templateVariableForm =
   document.querySelector<HTMLFormElement>('#template-variable-form');
 const templateVariableTitle = document.querySelector<HTMLElement>('#template-variable-title');
 const templateVariableFields = document.querySelector<HTMLElement>('#template-variable-fields');
+const premiumModal = document.querySelector<HTMLDialogElement>('#premium-modal');
 
 let allClips: Clip[] = [];
 let allTags: Tag[] = [];
@@ -335,6 +337,10 @@ const handlers: ClipListHandlers = {
         return;
       }
       try {
+        if (!(await requirePremium('ai_translate'))) {
+          premiumModal?.showModal();
+          return;
+        }
         const text = await translateClip(clip, targetLang, settings.gemini_api_key);
         if (translateBody) {
           translateBody.textContent = text;

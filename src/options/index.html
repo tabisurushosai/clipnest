@@ -182,6 +182,11 @@
       </main>
     </div>
     <div id="options-toast" hidden>Saved</div>
+    <dialog id="premium-modal">
+      <p>This feature requires Premium.</p>
+      <button id="premium-modal-purchase" type="button">購入する ($5)</button>
+      <button type="button" onclick="this.closest('dialog')?.close()">Close</button>
+    </dialog>
     <script type="module" src="./main.ts"></script>
   </body>
 </html>

@@ -1,5 +1,6 @@
 import { getLicense } from '../lib/license';
 import { getSettings } from '../lib/db';
+import { requirePremium } from '../lib/premium_gate';
 import { getItem, setItem, STORAGE_KEYS } from '../lib/storage';
 import { listTags } from '../lib/tags';
 import {
@@ -148,8 +149,7 @@ async function exportTemplateData(): Promise<void> {
 }
 
 async function importTemplateData(file: File): Promise<void> {
-  const license = await getLicense();
-  if (license.tier === 'free') {
+  if (!(await requirePremium('template_import'))) {
     premiumModal?.showModal();
     return;
   }
@@ -176,8 +176,7 @@ exportButton?.addEventListener('click', () => {
 });
 
 importButton?.addEventListener('click', async () => {
-  const license = await getLicense();
-  if (license.tier === 'free') {
+  if (!(await requirePremium('template_import'))) {
     premiumModal?.showModal();
     return;
   }
@@ -200,8 +199,11 @@ form?.addEventListener('submit', (event) => {
   }
 
   void (async () => {
-    const license = await getLicense();
-    if (!editingId && license.tier === 'free' && currentTemplates.length >= FREE_TEMPLATE_LIMIT) {
+    if (
+      !editingId &&
+      currentTemplates.length >= FREE_TEMPLATE_LIMIT &&
+      !(await requirePremium('templates'))
+    ) {
       premiumModal?.showModal();
       return;
     }
