@@ -8,6 +8,19 @@ const usageEl = document.querySelector<HTMLElement>('#ai-usage');
 const tagManagerLink = document.querySelector<HTMLAnchorElement>('#tag-manager-link');
 const templateManagerLink =
   document.querySelector<HTMLAnchorElement>('#template-manager-link');
+const sectionButtons = document.querySelectorAll<HTMLButtonElement>('[data-section-target]');
+
+function showSection(sectionId: string): void {
+  document.querySelectorAll<HTMLElement>('.settings-section').forEach((section) => {
+    section.hidden = section.id !== `section-${sectionId}`;
+  });
+}
+
+sectionButtons.forEach((button) => {
+  button.addEventListener('click', () => {
+    showSection(button.dataset.sectionTarget ?? 'general');
+  });
+});
 
 async function refresh(): Promise<void> {
   const [settings, license, usage] = await Promise.all([

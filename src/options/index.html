@@ -25,8 +25,22 @@
         align-items: center;
         gap: 8px;
       }
+      .settings-layout {
+        display: grid;
+        grid-template-columns: 180px 1fr;
+        gap: 24px;
+      }
       nav {
-        margin-bottom: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      nav button,
+      nav a {
+        text-align: left;
+      }
+      .settings-section[hidden] {
+        display: none;
       }
       .api-key-guide {
         margin-top: 20px;
@@ -46,33 +60,62 @@
     </style>
   </head>
   <body>
-    <nav>
-      <a id="tag-manager-link" href="tags.html">Tag manager</a>
-      <a id="template-manager-link" href="templates.html">Template manager</a>
-    </nav>
     <h1>Clipnest Settings</h1>
-    <section>
-      <label class="row">
-        <input id="ai-enabled" type="checkbox" />
-        AI 機能を有効化 (Premium のみ)
-      </label>
-      <label for="gemini-api-key">Gemini API key</label>
-      <input id="gemini-api-key" type="password" autocomplete="off" placeholder="BYO API key" />
-      <aside class="api-key-guide" aria-labelledby="api-key-guide-title">
-        <h2 id="api-key-guide-title">BYO API key の取得手順</h2>
-        <ol>
-          <li>
-            <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer"
-              >Google AI Studio</a
-            >
-            を開く
-          </li>
-          <li>「Create API key」からキーを作成する</li>
-          <li>表示されたキーを上の入力欄に貼り付け、フォーカスを外して保存する</li>
-        </ol>
-      </aside>
-      <p>Monthly AI calls: <span id="ai-usage">0</span></p>
-    </section>
+    <div class="settings-layout">
+      <nav aria-label="Settings sections">
+        <button type="button" data-section-target="general">一般</button>
+        <button type="button" data-section-target="ai">AI</button>
+        <button type="button" data-section-target="tags">タグ</button>
+        <button type="button" data-section-target="templates">テンプレート</button>
+        <button type="button" data-section-target="license">ライセンス</button>
+        <button type="button" data-section-target="about">バージョン情報</button>
+      </nav>
+      <main>
+        <section id="section-general" class="settings-section">
+          <h2>一般</h2>
+          <p>Basic settings will appear here.</p>
+        </section>
+        <section id="section-ai" class="settings-section" hidden>
+          <h2>AI</h2>
+          <label class="row">
+            <input id="ai-enabled" type="checkbox" />
+            AI 機能を有効化 (Premium のみ)
+          </label>
+          <label for="gemini-api-key">Gemini API key</label>
+          <input id="gemini-api-key" type="password" autocomplete="off" placeholder="BYO API key" />
+          <aside class="api-key-guide" aria-labelledby="api-key-guide-title">
+            <h2 id="api-key-guide-title">BYO API key の取得手順</h2>
+            <ol>
+              <li>
+                <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer"
+                  >Google AI Studio</a
+                >
+                を開く
+              </li>
+              <li>「Create API key」からキーを作成する</li>
+              <li>表示されたキーを上の入力欄に貼り付け、フォーカスを外して保存する</li>
+            </ol>
+          </aside>
+          <p>Monthly AI calls: <span id="ai-usage">0</span></p>
+        </section>
+        <section id="section-tags" class="settings-section" hidden>
+          <h2>タグ</h2>
+          <a id="tag-manager-link" href="tags.html">Tag manager</a>
+        </section>
+        <section id="section-templates" class="settings-section" hidden>
+          <h2>テンプレート</h2>
+          <a id="template-manager-link" href="templates.html">Template manager</a>
+        </section>
+        <section id="section-license" class="settings-section" hidden>
+          <h2>ライセンス</h2>
+          <p>License controls will appear here.</p>
+        </section>
+        <section id="section-about" class="settings-section" hidden>
+          <h2>バージョン情報</h2>
+          <p>Version information will appear here.</p>
+        </section>
+      </main>
+    </div>
     <script type="module" src="./main.ts"></script>
   </body>
 </html>
