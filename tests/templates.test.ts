@@ -13,11 +13,11 @@ import type { Template } from '../src/lib/types';
 
 type MockGlobal = typeof globalThis & { __mockStorage?: Record<string, unknown> };
 
-describe('templates CRUD', () => {
-  beforeEach(() => {
-    (globalThis as MockGlobal).__mockStorage = {};
-  });
+beforeEach(() => {
+  (globalThis as MockGlobal).__mockStorage = {};
+});
 
+describe('templates CRUD', () => {
   it('creates, lists, updates, deletes, and increments use_count', async () => {
     const created = await createTemplate({
       title: 'Greeting',
@@ -39,6 +39,45 @@ describe('templates CRUD', () => {
 
     await deleteTemplate(created.id);
     expect(await listTemplates()).toEqual([]);
+  });
+
+  it('defaults missing category to Uncategorized', async () => {
+    const created = await createTemplate({
+      title: 'No category',
+      body: 'Body',
+    });
+    expect(created.category).toBe('Uncategorized');
+  });
+
+  it('falls back unknown category to Other', async () => {
+    const created = await createTemplate({
+      title: 'Unknown category',
+      body: 'Body',
+      category: 'Custom',
+    });
+    expect(created.category).toBe('Other');
+  });
+
+  it('keeps predefined category values', async () => {
+    const created = await createTemplate({
+      title: 'Email template',
+      body: 'Body',
+      category: 'Email',
+    });
+    expect(created.category).toBe('Email');
+  });
+
+  it('keeps category when updating body and recalculates variables', async () => {
+    const created = await createTemplate({
+      title: 'Reply',
+      body: 'Hi {{name}}',
+      category: 'Reply',
+    });
+
+    await updateTemplate(created.id, { body: 'Ticket {{ticket_id}}' });
+    const [updated] = await listTemplates();
+    expect(updated.category).toBe('Reply');
+    expect(updated.variables).toEqual(['ticket_id']);
   });
 });
 

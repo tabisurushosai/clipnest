@@ -1,11 +1,11 @@
 import { getItem, setItem, STORAGE_KEYS } from './storage';
-import type { Template } from './types';
-import { isTemplate } from './types';
+import type { Template, TemplateCategory } from './types';
+import { isTemplate, normalizeTemplateCategory } from './types';
 
 export type TemplateInput = {
   title: string;
   body: string;
-  category?: string;
+  category?: TemplateCategory | string;
 };
 
 export function extractVariables(body: string): string[] {
@@ -33,7 +33,10 @@ async function loadTemplates(): Promise<Template[]> {
   if (!Array.isArray(raw)) {
     return [];
   }
-  return raw.filter(isTemplate);
+  return raw.filter(isTemplate).map((template) => ({
+    ...template,
+    category: normalizeTemplateCategory(template.category),
+  }));
 }
 
 async function persistTemplates(templates: Template[]): Promise<void> {
@@ -47,7 +50,7 @@ export async function createTemplate(input: TemplateInput): Promise<Template> {
     id: globalThis.crypto.randomUUID(),
     title: input.title.trim(),
     body: input.body,
-    category: input.category ?? 'Uncategorized',
+    category: normalizeTemplateCategory(input.category),
     variables: extractVariables(input.body),
     use_count: 0,
     created_at: now,
@@ -73,6 +76,10 @@ export async function updateTemplate(id: string, patch: Partial<TemplateInput>):
     ...templates[index],
     ...patch,
     title: patch.title === undefined ? templates[index].title : patch.title.trim(),
+    category:
+      patch.category === undefined
+        ? templates[index].category
+        : normalizeTemplateCategory(patch.category),
     variables:
       patch.body === undefined ? templates[index].variables : extractVariables(patch.body),
     updated_at: Date.now(),

@@ -6,11 +6,11 @@ import {
   listTemplates,
   updateTemplate,
 } from '../lib/templates';
-import type { Template } from '../lib/types';
+import { TEMPLATE_CATEGORIES, type Template, type TemplateCategory } from '../lib/types';
 
 const form = document.querySelector<HTMLFormElement>('#template-form');
 const titleInput = document.querySelector<HTMLInputElement>('#template-title');
-const categoryInput = document.querySelector<HTMLInputElement>('#template-category');
+const categoryInput = document.querySelector<HTMLSelectElement>('#template-category');
 const bodyInput = document.querySelector<HTMLTextAreaElement>('#template-body');
 const variablePreview = document.querySelector<HTMLElement>('#variable-preview');
 const templateList = document.querySelector<HTMLElement>('#template-list');
@@ -28,6 +28,20 @@ function updateVariablePreview(): void {
   }
   const variables = extractVariables(bodyInput.value);
   variablePreview.textContent = variables.length > 0 ? variables.join(', ') : 'None';
+}
+
+function renderCategoryOptions(): void {
+  if (!categoryInput) {
+    return;
+  }
+  categoryInput.replaceChildren(
+    ...TEMPLATE_CATEGORIES.map((category) => {
+      const option = document.createElement('option');
+      option.value = category;
+      option.textContent = category;
+      return option;
+    }),
+  );
 }
 
 function resetForm(): void {
@@ -117,13 +131,13 @@ form?.addEventListener('submit', (event) => {
       await updateTemplate(editingId, {
         title,
         body,
-        category: categoryInput?.value.trim() || 'Uncategorized',
+        category: (categoryInput?.value || 'Uncategorized') as TemplateCategory,
       });
     } else {
       await createTemplate({
         title,
         body,
-        category: categoryInput?.value.trim() || 'Uncategorized',
+        category: (categoryInput?.value || 'Uncategorized') as TemplateCategory,
       });
     }
     resetForm();
@@ -131,5 +145,6 @@ form?.addEventListener('submit', (event) => {
   })();
 });
 
+renderCategoryOptions();
 updateVariablePreview();
 void render();

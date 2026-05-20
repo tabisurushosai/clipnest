@@ -56,12 +56,47 @@ export function isTag(value: unknown): value is Tag {
   );
 }
 
+/** 定型文カテゴリ */
+export type TemplateCategory =
+  | 'Email'
+  | 'Code'
+  | 'Address'
+  | 'Phone'
+  | 'Reply'
+  | 'Quote'
+  | 'Other'
+  | 'Uncategorized';
+
+export const TEMPLATE_CATEGORIES: readonly TemplateCategory[] = [
+  'Email',
+  'Code',
+  'Address',
+  'Phone',
+  'Reply',
+  'Quote',
+  'Other',
+  'Uncategorized',
+];
+
+export function normalizeTemplateCategory(value: unknown): TemplateCategory {
+  if (value === undefined || value === '') {
+    return 'Uncategorized';
+  }
+  if (
+    typeof value === 'string' &&
+    TEMPLATE_CATEGORIES.includes(value as TemplateCategory)
+  ) {
+    return value as TemplateCategory;
+  }
+  return 'Other';
+}
+
 /** 定型文テンプレート */
 export interface Template {
   id: string;
   title: string;
   body: string;
-  category: string;
+  category: TemplateCategory;
   variables: string[];
   use_count: number;
   created_at: number;
@@ -77,7 +112,7 @@ export function isTemplate(value: unknown): value is Template {
     typeof record.id === 'string' &&
     typeof record.title === 'string' &&
     typeof record.body === 'string' &&
-    typeof record.category === 'string' &&
+    (record.category === undefined || typeof record.category === 'string') &&
     Array.isArray(record.variables) &&
     record.variables.every((variable) => typeof variable === 'string') &&
     typeof record.use_count === 'number' &&
