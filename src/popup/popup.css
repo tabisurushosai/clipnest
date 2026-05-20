@@ -291,8 +291,27 @@ body {
   max-width: 340px;
 }
 
+#templates-modal,
+#translate-modal {
+  color: var(--fg);
+  background: var(--item-bg);
+}
+
+#templates-modal::backdrop,
 #translate-modal::backdrop {
   background: rgba(15, 23, 42, 0.4);
+}
+
+.template-picker-item {
+  display: block;
+  width: 100%;
+  margin: 6px 0;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--fg);
+  text-align: left;
 }
 
 .clip-favicon {

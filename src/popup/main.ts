@@ -5,7 +5,12 @@ import { updateClip } from '../lib/db';
 import { sendMessage } from '../lib/messages';
 import { getItem, STORAGE_KEYS } from '../lib/storage';
 import { createTag, listTags } from '../lib/tags';
-import type { Clip, Tag } from '../lib/types';
+import {
+  fillTemplate,
+  incrementUseCount as incrementTemplateUseCount,
+  listTemplates,
+} from '../lib/templates';
+import type { Clip, Tag, Template } from '../lib/types';
 import { isSettings } from '../lib/types';
 import { getLicense } from '../lib/license';
 import { updateClipCounterElement } from './counter';
@@ -30,9 +35,18 @@ const toastEl = document.querySelector<HTMLElement>('#toast');
 const translateModal = document.querySelector<HTMLDialogElement>('#translate-modal');
 const translateBody = document.querySelector<HTMLElement>('#translate-body');
 const translateCopyBtn = document.querySelector<HTMLButtonElement>('#translate-copy');
+const templatesButton = document.querySelector<HTMLButtonElement>('#templates-button');
+const templatesModal = document.querySelector<HTMLDialogElement>('#templates-modal');
+const templatePickerList = document.querySelector<HTMLElement>('#template-picker-list');
+const templateVariableForm =
+  document.querySelector<HTMLFormElement>('#template-variable-form');
+const templateVariableTitle = document.querySelector<HTMLElement>('#template-variable-title');
+const templateVariableFields = document.querySelector<HTMLElement>('#template-variable-fields');
 
 let allClips: Clip[] = [];
 let allTags: Tag[] = [];
+let allTemplates: Template[] = [];
+let selectedTemplate: Template | null = null;
 let currentTier: 'free' | 'trial' | 'premium' = 'free';
 let uiState: PopupUiState = { ...DEFAULT_POPUP_STATE };
 let virtualPage = 0;
@@ -65,6 +79,79 @@ function showToast(message = 'Copied'): void {
     toastEl.hidden = true;
     toastEl.classList.remove('is-visible');
   }, 1500);
+}
+
+async function copyTemplate(template: Template, values: Record<string, string>): Promise<void> {
+  const text = fillTemplate(template, values);
+  await navigator.clipboard.writeText(text);
+  await incrementTemplateUseCount(template.id);
+  showToast('Copied template');
+  templatesModal?.close();
+}
+
+function renderTemplateVariableForm(template: Template): void {
+  selectedTemplate = template;
+  if (!templateVariableForm || !templateVariableFields) {
+    return;
+  }
+  if (template.variables.length === 0) {
+    void copyTemplate(template, {});
+    return;
+  }
+  templateVariableTitle!.textContent = template.title;
+  templateVariableFields.replaceChildren(
+    ...template.variables.map((variable) => {
+      const label = document.createElement('label');
+      label.textContent = variable;
+      const input = document.createElement('input');
+      input.name = variable;
+      input.type = 'text';
+      label.append(input);
+      return label;
+    }),
+  );
+  templateVariableForm.hidden = false;
+}
+
+function renderTemplatePicker(category = 'all'): void {
+  if (!templatePickerList) {
+    return;
+  }
+  const templates =
+    category === 'all'
+      ? allTemplates
+      : allTemplates.filter((template) => template.category === category);
+  templatePickerList.replaceChildren(
+    ...templates.map((template) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'template-picker-item';
+      button.textContent = `${template.title} (${template.category || 'Uncategorized'})`;
+      button.addEventListener('click', () => {
+        renderTemplateVariableForm(template);
+      });
+      return button;
+    }),
+  );
+}
+
+function renderTemplateCategoryFilter(): void {
+  const container = document.querySelector<HTMLElement>('#template-category-filter');
+  if (!container) {
+    return;
+  }
+  const categories = ['all', ...new Set(allTemplates.map((template) => template.category))];
+  container.replaceChildren(
+    ...categories.map((category) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = category;
+      button.addEventListener('click', () => {
+        renderTemplatePicker(category);
+      });
+      return button;
+    }),
+  );
 }
 
 function visibleClips(): Clip[] {
@@ -425,6 +512,28 @@ async function bootstrap(): Promise<void> {
     }
     await navigator.clipboard.writeText(text);
     showToast('Copied translation');
+  });
+
+  templatesButton?.addEventListener('click', async () => {
+    allTemplates = await listTemplates();
+    templateVariableForm?.setAttribute('hidden', '');
+    renderTemplateCategoryFilter();
+    renderTemplatePicker();
+    templatesModal?.showModal();
+  });
+
+  templateVariableForm?.addEventListener('submit', (event) => {
+    event.preventDefault();
+    if (!selectedTemplate || !templateVariableFields) {
+      return;
+    }
+    const values = Object.fromEntries(
+      [...templateVariableFields.querySelectorAll<HTMLInputElement>('input')].map((input) => [
+        input.name,
+        input.value,
+      ]),
+    );
+    void copyTemplate(selectedTemplate, values);
   });
 
   try {
