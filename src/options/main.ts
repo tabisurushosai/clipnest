@@ -1,6 +1,7 @@
 import { getAiUsage } from '../lib/ai_usage';
 import { getSettings, updateSettings } from '../lib/db';
 import { getLicense, type LicenseTier } from '../lib/license';
+import { removeItem, setItem, STORAGE_KEYS } from '../lib/storage';
 import type { Theme } from '../lib/types';
 
 const aiToggle = document.querySelector<HTMLInputElement>('#ai-enabled');
@@ -18,6 +19,9 @@ const templateManagerLink =
 const sectionButtons = document.querySelectorAll<HTMLButtonElement>('[data-section-target]');
 const toast = document.querySelector<HTMLElement>('#options-toast');
 const popupShortcut = document.querySelector<HTMLElement>('#popup-shortcut');
+const storageUsageText = document.querySelector<HTMLElement>('#storage-usage-text');
+const deleteAllClipsButton = document.querySelector<HTMLButtonElement>('#delete-all-clips');
+const resetAllDataButton = document.querySelector<HTMLButtonElement>('#reset-all-data');
 
 function showToast(message = 'Saved'): void {
   if (!toast) {
@@ -97,6 +101,54 @@ async function loadShortcutInfo(): Promise<void> {
   }
 }
 
+async function refreshStorageUsage(): Promise<void> {
+  const storage = (
+    globalThis as {
+      chrome?: {
+        storage?: {
+          local?: { getBytesInUse?: (keys: string | string[] | null) => Promise<number> };
+        };
+      };
+    }
+  ).chrome?.storage?.local;
+  const bytes = storage?.getBytesInUse ? await storage.getBytesInUse(null) : 0;
+  if (storageUsageText) {
+    storageUsageText.textContent = `${bytes} bytes`;
+  }
+}
+
+deleteAllClipsButton?.addEventListener('click', () => {
+  if (!globalThis.confirm('全クリップを削除しますか？')) {
+    return;
+  }
+  if (!globalThis.confirm('この操作は元に戻せません。続行しますか？')) {
+    return;
+  }
+  void setItem(STORAGE_KEYS.clips, []).then(() => {
+    showToast('Clips deleted');
+    return refreshStorageUsage();
+  });
+});
+
+resetAllDataButton?.addEventListener('click', () => {
+  if (!globalThis.confirm('タグ/テンプレート/設定を含む全データを削除しますか？')) {
+    return;
+  }
+  if (!globalThis.confirm('本当に全データをリセットしますか？')) {
+    return;
+  }
+  void Promise.all([
+    setItem(STORAGE_KEYS.clips, []),
+    setItem(STORAGE_KEYS.tags, []),
+    setItem(STORAGE_KEYS.templates, []),
+    removeItem(STORAGE_KEYS.settings),
+    removeItem(STORAGE_KEYS.license),
+  ]).then(() => {
+    showToast('Data reset');
+    return refresh();
+  });
+});
+
 document.querySelectorAll<HTMLButtonElement>('[data-setting-max-clips]').forEach((button) => {
   button.addEventListener('click', () => {
     const maxClips = Number(button.dataset.settingMaxClips);
@@ -164,3 +216,4 @@ if (templateManagerLink) {
 
 void refresh();
 void loadShortcutInfo();
+void refreshStorageUsage();
