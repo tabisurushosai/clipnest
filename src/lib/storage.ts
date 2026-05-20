@@ -9,6 +9,7 @@ export const STORAGE_KEYS = {
   ai_cache: 'clipnest:ai_cache',
   ai_error_count: 'clipnest:ai_error_count',
   popup_state: 'clipnest:popup_state',
+  downgrade_notified: 'clipnest:downgrade_notified',
 } as const;
 
 type StorageArea = {

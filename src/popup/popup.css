@@ -365,3 +365,38 @@ body {
   font-size: 13px;
   padding: 24px 8px;
 }
+
+.trial-banner,
+.downgrade-banner {
+  margin: 0 0 8px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.trial-banner {
+  background: #dbeafe;
+  color: #1e3a8a;
+  border: 1px solid #93c5fd;
+}
+
+.trial-banner.is-warning {
+  background: #fef3c7;
+  color: #92400e;
+  border-color: #fcd34d;
+}
+
+.downgrade-banner {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+  cursor: default;
+}
+
+.header-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}

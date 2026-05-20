@@ -10,11 +10,14 @@
   </head>
   <body>
     <header class="popup-header">
+      <div id="trial-banner" class="trial-banner" hidden></div>
+      <div id="downgrade-banner" class="downgrade-banner" hidden></div>
       <h1>Clipnest</h1>
       <div class="search-row">
         <input id="search" type="search" placeholder="Search clips…" autocomplete="off" />
         <button id="clear-search" type="button" aria-label="Clear search">×</button>
         <button id="templates-button" type="button">Templates</button>
+        <button id="shortcut-help-button" type="button" aria-label="Shortcuts">?</button>
       </div>
       <div class="filter-toolbar" role="toolbar" aria-label="Type filters">
         <button type="button" class="filter-chip is-active" data-type-filter="all">All</button>
@@ -72,8 +75,15 @@
       </article>
     </dialog>
     <dialog id="premium-modal">
-      <p>This feature requires Premium.</p>
+      <p id="premium-modal-text">This feature requires Premium.</p>
       <button type="button" onclick="this.closest('dialog')?.close()">Close</button>
+    </dialog>
+    <dialog id="shortcut-help-modal">
+      <article>
+        <h2 id="shortcut-help-title">Shortcuts</h2>
+        <p id="shortcut-help-body"></p>
+        <button type="button" onclick="this.closest('dialog')?.close()">Close</button>
+      </article>
     </dialog>
     <div id="toast" hidden aria-live="polite">Copied</div>
     <script type="module" src="./main.ts"></script>
