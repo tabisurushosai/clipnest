@@ -1,3 +1,5 @@
+import { formatDate, resolveFormatLocale } from '../lib/format_date';
+import { getUiLanguage } from '../lib/i18n';
 import type { Clip, Tag } from '../lib/types';
 import { highlightMatch } from './highlight';
 import { shouldVirtualize, VIRTUAL_PAGE_SIZE, VIRTUAL_THRESHOLD } from './virtual';
@@ -152,7 +154,9 @@ export function renderClipList(
 
     const meta = document.createElement('p');
     meta.className = 'clip-meta';
-    const metaParts = [clip.ai_category, clip.source_url || 'Unknown source'].filter(Boolean);
+    const locale = resolveFormatLocale(getUiLanguage());
+    const when = formatDate(clip.created_at, locale);
+    const metaParts = [when, clip.ai_category, clip.source_url || 'Unknown source'].filter(Boolean);
     meta.textContent = metaParts.join(' · ');
 
     if (clip.ai_summary) {

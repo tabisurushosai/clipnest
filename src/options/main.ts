@@ -1,6 +1,8 @@
 import { getAiUsage } from '../lib/ai_usage';
 import { openPaymentPage, verifyLicense } from '../lib/billing';
 import { getSettings, updateSettings } from '../lib/db';
+import { formatDate, resolveFormatLocale } from '../lib/format_date';
+import { getUiLanguage } from '../lib/i18n';
 import { getLicense, TRIAL_DURATION_MS, type LicenseTier } from '../lib/license';
 import { requirePremium } from '../lib/premium_gate';
 import { removeItem, setItem, STORAGE_KEYS } from '../lib/storage';
@@ -88,7 +90,10 @@ async function refresh(): Promise<void> {
   if (trialDaysRemaining) {
     if (license.tier === 'trial' && license.trial_start_ts !== null) {
       const remainingMs = Math.max(0, TRIAL_DURATION_MS - (Date.now() - license.trial_start_ts));
-      trialDaysRemaining.textContent = `Trial remaining: ${Math.ceil(remainingMs / 86_400_000)} days`;
+      const days = Math.ceil(remainingMs / 86_400_000);
+      const locale = resolveFormatLocale(getUiLanguage());
+      const endsAt = formatDate(license.trial_start_ts + TRIAL_DURATION_MS, locale);
+      trialDaysRemaining.textContent = `Trial remaining: ${days} days (ends ${endsAt})`;
     } else {
       trialDaysRemaining.textContent = '';
     }
@@ -283,6 +288,37 @@ if (tagManagerLink) {
 if (templateManagerLink) {
   templateManagerLink.href = 'templates.html';
 }
+
+function extensionAssetUrl(relativePath: string): string {
+  const runtime = (
+    globalThis as { chrome?: { runtime?: { getURL?: (path: string) => string } } }
+  ).chrome?.runtime;
+  return runtime?.getURL?.(relativePath) ?? relativePath;
+}
+
+function bindLegalLinks(): void {
+  const isJa = getUiLanguage().toLowerCase().startsWith('ja');
+  const privacyLink = document.querySelector<HTMLAnchorElement>('#privacy-link');
+  const termsLink = document.querySelector<HTMLAnchorElement>('#terms-link');
+  const licensesLink = document.querySelector<HTMLAnchorElement>('#licenses-link');
+  if (privacyLink) {
+    privacyLink.href = extensionAssetUrl(isJa ? 'legal/PRIVACY.ja.md' : 'legal/PRIVACY.md');
+    privacyLink.target = '_blank';
+    privacyLink.rel = 'noopener noreferrer';
+  }
+  if (termsLink) {
+    termsLink.href = extensionAssetUrl(isJa ? 'legal/TERMS.ja.md' : 'legal/TERMS.md');
+    termsLink.target = '_blank';
+    termsLink.rel = 'noopener noreferrer';
+  }
+  if (licensesLink) {
+    licensesLink.href = extensionAssetUrl('legal/LICENSES.md');
+    licensesLink.target = '_blank';
+    licensesLink.rel = 'noopener noreferrer';
+  }
+}
+
+bindLegalLinks();
 
 void refresh();
 void loadShortcutInfo();
