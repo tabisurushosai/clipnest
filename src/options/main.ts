@@ -1,6 +1,6 @@
 import { getAiUsage } from '../lib/ai_usage';
 import { getSettings, updateSettings } from '../lib/db';
-import { getLicense, type LicenseTier } from '../lib/license';
+import { getLicense, TRIAL_DURATION_MS, type LicenseTier } from '../lib/license';
 import { removeItem, setItem, STORAGE_KEYS } from '../lib/storage';
 import type { Theme } from '../lib/types';
 
@@ -23,6 +23,8 @@ const storageUsageText = document.querySelector<HTMLElement>('#storage-usage-tex
 const deleteAllClipsButton = document.querySelector<HTMLButtonElement>('#delete-all-clips');
 const resetAllDataButton = document.querySelector<HTMLButtonElement>('#reset-all-data');
 const extensionVersion = document.querySelector<HTMLElement>('#extension-version');
+const licenseTierText = document.querySelector<HTMLElement>('#license-tier');
+const trialDaysRemaining = document.querySelector<HTMLElement>('#trial-days-remaining');
 
 function showToast(message = 'Saved'): void {
   if (!toast) {
@@ -72,6 +74,17 @@ async function refresh(): Promise<void> {
   }
   if (usageEl) {
     usageEl.textContent = String(usage);
+  }
+  if (licenseTierText) {
+    licenseTierText.textContent = license.tier.toUpperCase();
+  }
+  if (trialDaysRemaining) {
+    if (license.tier === 'trial' && license.trial_start_ts !== null) {
+      const remainingMs = Math.max(0, TRIAL_DURATION_MS - (Date.now() - license.trial_start_ts));
+      trialDaysRemaining.textContent = `Trial remaining: ${Math.ceil(remainingMs / 86_400_000)} days`;
+    } else {
+      trialDaysRemaining.textContent = '';
+    }
   }
   document.querySelectorAll<HTMLInputElement>('input[name="theme"]').forEach((input) => {
     input.checked = input.value === settings.theme;
