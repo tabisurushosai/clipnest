@@ -73,7 +73,29 @@
       <main>
         <section id="section-general" class="settings-section">
           <h2>一般</h2>
-          <p>Basic settings will appear here.</p>
+          <h3>Max clips</h3>
+          <div id="max-clips-options">
+            <button type="button" data-setting-max-clips="5">5</button>
+            <button type="button" data-setting-max-clips="10">10</button>
+            <button type="button" data-setting-max-clips="20">20</button>
+            <button type="button" data-setting-max-clips="50">50</button>
+            <button type="button" data-setting-max-clips="100" data-premium-only="true">100</button>
+            <button type="button" data-setting-max-clips="500" data-premium-only="true">500</button>
+            <button type="button" data-setting-max-clips="1000" data-premium-only="true">1000</button>
+            <button type="button" data-setting-max-clips="5000" data-premium-only="true">5000</button>
+          </div>
+          <h3>Retention days</h3>
+          <div id="retention-options">
+            <button type="button" data-setting-retention-days="7">7</button>
+            <button type="button" data-setting-retention-days="30">30</button>
+            <button type="button" data-setting-retention-days="90" data-premium-only="true">90</button>
+            <button type="button" data-setting-retention-days="180" data-premium-only="true">180</button>
+            <button type="button" data-setting-retention-days="365" data-premium-only="true">365</button>
+          </div>
+          <h3>Theme</h3>
+          <label><input type="radio" name="theme" value="auto" /> Auto</label>
+          <label><input type="radio" name="theme" value="light" /> Light</label>
+          <label><input type="radio" name="theme" value="dark" /> Dark</label>
         </section>
         <section id="section-ai" class="settings-section" hidden>
           <h2>AI</h2>
@@ -116,6 +138,7 @@
         </section>
       </main>
     </div>
+    <div id="options-toast" hidden>Saved</div>
     <script type="module" src="./main.ts"></script>
   </body>
 </html>
